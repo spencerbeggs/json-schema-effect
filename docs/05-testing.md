@@ -4,12 +4,13 @@ json-schema-effect provides Test layers for isolated testing and follows standar
 
 ## Test Layers
 
-Both services expose a static `.Test` accessor:
+All three services expose a static `.Test` accessor:
 
 | Service | Test behavior |
 | ------- | ------------- |
 | `JsonSchemaExporter.Test` | Creates a temporary directory, provides `NodeFileSystem`, and cleans up on scope close |
 | `JsonSchemaValidator.Test` | Returns the Live implementation (Ajv is pure CPU, no I/O to mock) |
+| `JsonSchemaScaffolder.Test` | Provides `NodeFileSystem` so scaffold operations work without manual layer composition |
 
 ### JsonSchemaExporter.Test
 
@@ -53,9 +54,28 @@ const result = await Effect.runPromise(
 );
 ```
 
+### JsonSchemaScaffolder.Test
+
+The Test layer provides `NodeFileSystem` so scaffold write operations work without manual layer composition:
+
+```typescript
+import { Effect } from "effect";
+import { JsonSchemaScaffolder } from "json-schema-effect";
+
+const result = await Effect.runPromise(
+  Effect.provide(
+    Effect.gen(function* () {
+      const scaffolder = yield* JsonSchemaScaffolder;
+      return yield* scaffolder.scaffold(output, { format: "toml" });
+    }),
+    JsonSchemaScaffolder.Test,
+  ),
+);
+```
+
 ## Layer Composition for Tests
 
-For integration tests that need both services:
+For integration tests that need multiple services:
 
 ```typescript
 import { NodeFileSystem } from "@effect/platform-node";
@@ -154,4 +174,4 @@ it("rejects invalid schema", async () => {
 
 ---
 
-[Previous: JSON Schema Advanced](./03-json-schema-advanced.md) | [Next: Error Handling](./05-error-handling.md)
+[Previous: Config Scaffolding](./04-config-scaffolding.md) | [Next: Error Handling](./06-error-handling.md)

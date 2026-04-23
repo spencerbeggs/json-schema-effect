@@ -48,21 +48,23 @@ const layer = Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer);
 Effect.runPromise(Effect.provide(program, layer));
 ```
 
-### Two Services
+### Three Services
 
 | Service | Purpose | Dependencies |
 | ------- | ------- | ------------ |
 | `JsonSchemaExporter` | Generate JSON Schema from Effect Schema and write to disk | `FileSystem` (from `@effect/platform`) |
 | `JsonSchemaValidator` | Validate JSON Schema with Ajv and check annotation placement | `ajv` (optional peer) |
+| `JsonSchemaScaffolder` | Generate starter config files (JSON/TOML) from JSON Schema | `FileSystem` (from `@effect/platform`) |
 
 ### The Pipeline
 
-The typical workflow is: **generate** -> **validate** -> **write**.
+The typical workflow is: **generate** -> **validate** -> **write**. Optionally, **scaffold** a starter config file from the generated schema.
 
 ```typescript
 const program = Effect.gen(function* () {
   const exporter = yield* JsonSchemaExporter;
   const validator = yield* JsonSchemaValidator;
+  const scaffolder = yield* JsonSchemaScaffolder;
 
   // 1. Generate a JSON Schema from an Effect Schema
   const output = yield* exporter.generate({
@@ -78,6 +80,14 @@ const program = Effect.gen(function* () {
   // 3. Write to disk (skips if unchanged)
   const result = yield* exporter.write(validated, "./schemas/app-config.json");
   console.log(result._tag); // "Written" or "Unchanged"
+
+  // 4. (Optional) Scaffold a starter config file
+  const scaffoldResult = yield* scaffolder.writeScaffold(
+    validated,
+    "./app-config.toml",
+    { format: "toml" },
+  );
+  console.log(scaffoldResult._tag); // "Written" or "Unchanged"
 });
 ```
 
@@ -133,4 +143,4 @@ Effect.runPromise(Effect.provide(program, MainLayer));
 
 ---
 
-[Next: JSON Schema Generation](./02-json-schema-generation.md)
+[Next: JSON Schema Generation](./02-json-schema-generation.md) | [All Guides](./README.md)

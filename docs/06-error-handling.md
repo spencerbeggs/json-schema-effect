@@ -8,6 +8,7 @@ json-schema-effect uses Effect's `Data.TaggedError` for typed, catchable errors.
 | ----- | --- | ----------- |
 | `JsonSchemaError` | `"JsonSchemaError"` | Schema generation or file writing fails |
 | `JsonSchemaValidationError` | `"JsonSchemaValidationError"` | Schema validation fails (Ajv or placement rules) |
+| `ScaffoldError` | `"ScaffoldError"` | Config scaffolding or scaffold file writing fails |
 
 ## JsonSchemaError
 
@@ -74,18 +75,50 @@ yield* validator.validate(output, { strict: true, ajvStrict: true }).pipe(
 );
 ```
 
+## ScaffoldError
+
+Raised by `JsonSchemaScaffolder.scaffold()` and `JsonSchemaScaffolder.writeScaffold()`:
+
+```typescript
+class ScaffoldError extends Data.TaggedError("ScaffoldError")<{
+  readonly reason: "unresolved-ref" | "unsupported-type" | "serialization";
+  readonly message: string;
+}> {}
+```
+
+Fields:
+
+- `reason` --- classifies the failure:
+  - `"unresolved-ref"` --- encountered a `$ref` not inlined by the exporter
+  - `"unsupported-type"` --- schema construct cannot be scaffolded
+  - `"serialization"` --- TOML/JSON serialization failed
+- `message` --- human-readable description of the failure
+
+### Catching Scaffold Errors
+
+```typescript
+yield* scaffolder.writeScaffold(output, "./config.toml", { format: "toml" }).pipe(
+  Effect.catchTag("ScaffoldError", (err) => {
+    console.error(`Scaffold failed (${err.reason}): ${err.message}`);
+    return Effect.void;
+  }),
+);
+```
+
 ## Combined Error Handling
 
-Handle both error types in a pipeline:
+Handle all error types in a pipeline:
 
 ```typescript
 const program = Effect.gen(function* () {
   const exporter = yield* JsonSchemaExporter;
   const validator = yield* JsonSchemaValidator;
+  const scaffolder = yield* JsonSchemaScaffolder;
 
   const output = yield* exporter.generate(entry);
   const validated = yield* validator.validate(output, { strict: true, ajvStrict: true });
-  return yield* exporter.write(validated, outputPath);
+  yield* exporter.write(validated, outputPath);
+  return yield* scaffolder.writeScaffold(validated, configPath, { format: "toml" });
 });
 
 yield* program.pipe(
@@ -96,6 +129,10 @@ yield* program.pipe(
     },
     JsonSchemaValidationError: (err) => {
       console.error(`Validation errors: ${err.errors.join(", ")}`);
+      return Effect.succeed({ _tag: "Failed" as const });
+    },
+    ScaffoldError: (err) => {
+      console.error(`Scaffold error (${err.reason}): ${err.message}`);
       return Effect.succeed({ _tag: "Failed" as const });
     },
   }),
@@ -118,8 +155,8 @@ const generate = (entry: SchemaEntry) =>
 
 ## Base Classes
 
-Each error type exports a `*Base` class (`JsonSchemaErrorBase`, `JsonSchemaValidationErrorBase`). These are exported for TypeScript declaration bundling compatibility --- consumers should use the concrete error classes directly.
+Each error type exports a `*Base` class (`JsonSchemaErrorBase`, `JsonSchemaValidationErrorBase`, `ScaffoldErrorBase`). These are exported for TypeScript declaration bundling compatibility --- consumers should use the concrete error classes directly.
 
 ---
 
-[Previous: Testing](./04-testing.md) | [Next: API Reference](./06-api-reference.md)
+[Previous: Testing](./05-testing.md) | [Next: API Reference](./07-api-reference.md)

@@ -8,6 +8,7 @@ Complete reference for all exports from `json-schema-effect`.
 | ------ | ---- | ----- |
 | `JsonSchemaExporter` | `Context.Tag` | [JSON Schema Generation](./02-json-schema-generation.md) |
 | `JsonSchemaValidator` | `Context.Tag` | [JSON Schema Advanced](./03-json-schema-advanced.md) |
+| `JsonSchemaScaffolder` | `Context.Tag` | [Config Scaffolding](./04-config-scaffolding.md) |
 
 ### JsonSchemaExporter
 
@@ -42,6 +43,22 @@ Validate JSON Schema output using Ajv with annotation placement checks.
 | ------ | --------- | ----------- |
 | `validate` | `(output: JsonSchemaOutput, options?: ValidatorOptions) => Effect<JsonSchemaOutput, JsonSchemaValidationError>` | Validate a single schema |
 | `validateMany` | `(outputs: ReadonlyArray<JsonSchemaOutput>, options?: ValidatorOptions) => Effect<ReadonlyArray<JsonSchemaOutput>, JsonSchemaValidationError>` | Validate multiple schemas |
+
+### JsonSchemaScaffolder
+
+Generate starter config files (JSON or TOML) from JSON Schema output.
+
+**Layers:**
+
+- `JsonSchemaScaffolder.Live` --- requires `FileSystem` from `@effect/platform`
+- `JsonSchemaScaffolder.Test` --- provides `NodeFileSystem` automatically
+
+**Methods:**
+
+| Method | Signature | Description |
+| ------ | --------- | ----------- |
+| `scaffold` | `(output: JsonSchemaOutput, options: ScaffoldOptions) => Effect<string, ScaffoldError>` | Generate a config file string from a schema |
+| `writeScaffold` | `(output: JsonSchemaOutput, path: string, options: ScaffoldOptions) => Effect<WriteResult, ScaffoldError>` | Generate and write a config file (skips if unchanged) |
 
 ## Schemas
 
@@ -82,6 +99,8 @@ Factory functions for `WriteResult` tagged union:
 | ------ | ---- | ----- |
 | `tombi` | function | [JSON Schema Advanced](./03-json-schema-advanced.md) |
 | `taplo` | function | [JSON Schema Advanced](./03-json-schema-advanced.md) |
+| `scaffoldJson` | function | [Config Scaffolding](./04-config-scaffolding.md) |
+| `scaffoldToml` | function | [Config Scaffolding](./04-config-scaffolding.md) |
 
 ### tombi(options: TombiOptions): Record\<string, unknown>
 
@@ -91,14 +110,24 @@ Builds `x-tombi-*` annotation keys for Tombi TOML language server integration. S
 
 Builds `x-taplo` annotation object for Taplo TOML language server integration. See [taplo() Options Reference](./03-json-schema-advanced.md#taplo-options-reference).
 
+### scaffoldJson(schema, options): string
+
+Pure function that scaffolds a JSON config file string from a JSON Schema object. Uses tab indentation with a trailing newline. See [Pure Helpers](./04-config-scaffolding.md#pure-helpers).
+
+### scaffoldToml(schema, options): string
+
+Pure function that scaffolds a TOML config file string from a JSON Schema object. Emits scalar fields first, then nested objects as `[table]` sections and arrays-of-objects as `[[table]]` sections. See [Pure Helpers](./04-config-scaffolding.md#pure-helpers).
+
 ## Errors
 
 | Export | Kind | Guide |
 | ------ | ---- | ----- |
-| `JsonSchemaError` | `TaggedError` | [Error Handling](./05-error-handling.md) |
-| `JsonSchemaErrorBase` | `TaggedError` base | [Error Handling](./05-error-handling.md) |
-| `JsonSchemaValidationError` | `TaggedError` | [Error Handling](./05-error-handling.md) |
-| `JsonSchemaValidationErrorBase` | `TaggedError` base | [Error Handling](./05-error-handling.md) |
+| `JsonSchemaError` | `TaggedError` | [Error Handling](./06-error-handling.md) |
+| `JsonSchemaErrorBase` | `TaggedError` base | [Error Handling](./06-error-handling.md) |
+| `JsonSchemaValidationError` | `TaggedError` | [Error Handling](./06-error-handling.md) |
+| `JsonSchemaValidationErrorBase` | `TaggedError` base | [Error Handling](./06-error-handling.md) |
+| `ScaffoldError` | `TaggedError` | [Error Handling](./06-error-handling.md) |
+| `ScaffoldErrorBase` | `TaggedError` base | [Error Handling](./06-error-handling.md) |
 
 ### JsonSchemaError
 
@@ -108,12 +137,19 @@ Raised when JSON Schema generation or writing fails. Fields: `operation` (`"gene
 
 Raised when JSON Schema validation fails. Fields: `name`, `errors` (array of human-readable descriptions).
 
+### ScaffoldError
+
+Raised when config scaffolding or scaffold file writing fails. Fields: `reason` (`"unresolved-ref"`, `"unsupported-type"`, or `"serialization"`), `message`.
+
 ## Types
 
 | Export | Kind | Guide |
 | ------ | ---- | ----- |
 | `JsonSchemaExporterService` | interface | [JSON Schema Generation](./02-json-schema-generation.md) |
 | `JsonSchemaValidatorService` | interface | [JSON Schema Advanced](./03-json-schema-advanced.md) |
+| `JsonSchemaScaffolderService` | interface | [Config Scaffolding](./04-config-scaffolding.md) |
+| `ScaffoldOptions` | interface | [Config Scaffolding](./04-config-scaffolding.md) |
+| `ScaffoldHelperOptions` | interface | [Config Scaffolding](./04-config-scaffolding.md) |
 | `ValidatorOptions` | interface | [JSON Schema Advanced](./03-json-schema-advanced.md) |
 | `JsonSchemaOutput` | interface | [JSON Schema Generation](./02-json-schema-generation.md) |
 | `SchemaEntry` | interface | [JSON Schema Generation](./02-json-schema-generation.md) |
@@ -134,6 +170,25 @@ Input to `JsonSchemaExporter.generate()`:
 | `$id` | `string` | no | Top-level `$id` URL (SchemaStore convention) |
 | `annotations` | `Record<string, unknown>` | no | Extra properties merged into generated schema |
 
+### ScaffoldOptions
+
+Input to `JsonSchemaScaffolder.scaffold()` and `writeScaffold()`:
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `format` | `"toml" \| "json"` | (required) | Output format |
+| `includeOptional` | `boolean` | `true` | Whether to include optional properties |
+| `commentOptional` | `boolean` | `true` | (TOML only) Whether to comment out optional properties |
+
+### ScaffoldHelperOptions
+
+Input to `scaffoldJson()` and `scaffoldToml()` pure helpers:
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `includeOptional` | `boolean` | `true` | Whether to include optional properties |
+| `commentOptional` | `boolean` | `true` | (TOML only) Whether to comment out optional properties |
+
 ### ValidatorOptions
 
 | Field | Type | Default | Description |
@@ -144,3 +199,7 @@ Input to `JsonSchemaExporter.generate()`:
 ### WriteResult
 
 Tagged union: `{ _tag: "Written"; path: string }` or `{ _tag: "Unchanged"; path: string }`.
+
+---
+
+[Previous: Error Handling](./06-error-handling.md)

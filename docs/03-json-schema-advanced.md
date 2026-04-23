@@ -346,4 +346,4 @@ const Config = Schema.Struct({
 
 ---
 
-[Previous: JSON Schema Generation](./02-json-schema-generation.md) | [Next: Testing](./04-testing.md)
+[Previous: JSON Schema Generation](./02-json-schema-generation.md) | [Next: Config Scaffolding](./04-config-scaffolding.md)
