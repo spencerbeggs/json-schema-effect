@@ -1,73 +1,146 @@
-# pnpm-module-template
+# json-schema-effect
 
-A personal template repository by
-[C. Spencer Beggs](https://spencerbeg.gs) for developing and publishing Node.js
-modules to [npm](https://www.npmjs.com/) and
-[GitHub Packages](https://github.com/features/packages).
+[![npm version](https://img.shields.io/npm/v/@spencerbeggs/json-schema-effect)](https://www.npmjs.com/package/@spencerbeggs/json-schema-effect)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6)](https://www.typescriptlang.org/)
+[![Effect](https://img.shields.io/badge/Effect-3.21+-black)](https://effect.website/)
 
-You're welcome to clone or fork this template for your own use.
+[Effect](https://effect.website/) library for JSON Schema generation, validation, and TOML tooling annotations (Tombi/Taplo) built on Effect Schema.
 
-## What's Included
+## What is json-schema-effect?
 
-- **Build pipeline** — Dual-output builds (development + production) via
-  [Rslib](https://rslib.rs/) with automatic `package.json` transformation for
-  publishing
-- **Code quality** — [Biome](https://biomejs.dev/) for linting and formatting,
-  with git hooks for pre-commit checks and commit message validation
-- **Testing** — [Vitest](https://vitest.dev/) with v8 coverage
-- **Versioning** — [Changesets](https://github.com/changesets/changesets) for
-  version management and changelog generation
-- **CI/CD** — GitHub Actions for automated testing, building, and publishing
-  with provenance attestation
-- **TypeScript** — Strict mode, composite builds, ESM-first with `.js` import
-  extensions
+json-schema-effect turns [Effect Schema](https://effect.website/docs/schema/introduction/) definitions into spec-compliant JSON Schema documents, validates them with Ajv strict mode, and writes the results to disk -- all within the Effect ecosystem. It also ships annotation helpers for [Tombi](https://tombi.sh/) and [Taplo](https://taplo.tamasfe.dev/) so generated schemas can power TOML editor autocompletion out of the box. Every capability is packaged as a composable service, so you adopt only what your application needs.
 
-## Quick Start
+## Features
 
-1. Click **"Use this template"** on GitHub (or clone the repo directly)
-2. Update `package.json` with your package name, repository URL, and homepage
-3. Update the `repo` field in `.changeset/config.json`
-4. Replace the placeholder code in `src/` with your own
-5. Install dependencies:
+- **JsonSchemaExporter** -- Generate JSON Schema from Effect Schema definitions with full control over output entries
+- **JsonSchemaValidator** -- Validate generated schemas against Ajv strict mode for SchemaStore and Tombi compatibility
+- **JsonSchemaClass** -- Define self-describing schema classes that carry their own `$id`, output path, and TOML annotations
+- **Jsonifiable** -- Schema type that constrains values to JSON-safe structures for safe serialization
+- **tombi / taplo** -- Annotation helpers that embed TOML tooling metadata directly into your Effect Schema definitions
 
-   ```bash
-   pnpm install
-   ```
+## Quick Example
 
-6. Start developing:
+```typescript
+import { NodeFileSystem } from "@effect/platform-node";
+import { Effect, Layer, Schema } from "effect";
+import {
+  JsonSchemaClass,
+  JsonSchemaExporter,
+  JsonSchemaValidator,
+  tombi,
+} from "@spencerbeggs/json-schema-effect";
 
-   ```bash
-   pnpm run test:watch    # Run tests in watch mode
-   pnpm run lint:fix      # Auto-fix lint issues
-   pnpm run build         # Build dev + prod outputs
-   ```
+// 1. Define a self-describing schema class
+class MyConfig extends JsonSchemaClass("MyConfig", {
+  $id: "https://example.com/my-config.schema.json",
+  output: "schemas/my-config.schema.json",
+  annotations: tombi({ path: "my-config.toml" }),
+})({
+  name: Schema.String,
+  port: Schema.Number,
+  debug: Schema.optional(Schema.Boolean, { default: () => false }),
+}) {}
 
-## Project Structure
+// 2. Build the service layer
+const ExporterLive = JsonSchemaExporter.Live({
+  schemas: [MyConfig],
+  rootDir: "./",
+});
 
-```text
-src/               Source code and tests
-lib/configs/       Shared tool configurations (commitlint, lint-staged, markdownlint)
-dist/dev/          Development build output
-dist/npm/          Production build output (published to registries)
-.github/workflows/ CI/CD workflows
-.changeset/        Changeset configuration
+// 3. Generate, validate, and write
+const program = Effect.gen(function* () {
+  const exporter = yield* JsonSchemaExporter;
+  const output = yield* exporter.export();
+  const validator = yield* JsonSchemaValidator;
+  yield* validator.validateAll(output);
+  const results = yield* exporter.writeAll(output);
+  return results;
+});
+
+Effect.runPromise(
+  program.pipe(
+    Effect.provide(ExporterLive),
+    Effect.provide(JsonSchemaValidator.Live()),
+    Effect.provide(NodeFileSystem.layer),
+  ),
+);
 ```
 
-## Publishing
+## Install
 
-Packages are published to both npm and GitHub Packages with provenance
-attestation. The build pipeline automatically transforms `package.json` for
-publishing — the source file stays `"private": true` and the builder handles the
-rest.
+```bash
+pnpm add @spencerbeggs/json-schema-effect effect @effect/platform
+```
 
-See the [Changesets documentation](https://github.com/changesets/changesets) for
-how versioning and releases work.
+For writing schemas to disk, also install the platform-specific layer:
 
-## Claude Code
+```bash
+pnpm add @effect/platform-node
+```
 
-This template includes configuration for
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code). See
-[CLAUDE.md](CLAUDE.md) for details on the design-first development workflow.
+For `JsonSchemaValidator`, also install the optional peer dependency:
+
+```bash
+pnpm add ajv
+```
+
+## Documentation
+
+1. [Getting Started](./docs/01-getting-started.md)
+2. [JSON Schema Generation](./docs/02-json-schema-generation.md)
+3. [JSON Schema Advanced](./docs/03-json-schema-advanced.md)
+4. [Testing](./docs/04-testing.md)
+5. [Error Handling](./docs/05-error-handling.md)
+6. [API Reference](./docs/06-api-reference.md)
+
+## API at a Glance
+
+### Services
+
+| Export | Kind | Guide |
+| ------ | ---- | ----- |
+| [`JsonSchemaExporter`](./docs/02-json-schema-generation.md) | `Context.Tag` | JSON Schema Generation |
+| [`JsonSchemaValidator`](./docs/03-json-schema-advanced.md) | `Context.Tag` | JSON Schema Advanced |
+
+### Schemas
+
+| Export | Kind | Guide |
+| ------ | ---- | ----- |
+| [`Jsonifiable`](./docs/02-json-schema-generation.md) | `Schema` | JSON Schema Generation |
+| [`JsonSchemaClass`](./docs/03-json-schema-advanced.md) | factory | JSON Schema Advanced |
+| [`Written`](./docs/02-json-schema-generation.md) | function | JSON Schema Generation |
+| [`Unchanged`](./docs/02-json-schema-generation.md) | function | JSON Schema Generation |
+
+### Helpers
+
+| Export | Kind | Guide |
+| ------ | ---- | ----- |
+| [`tombi`](./docs/03-json-schema-advanced.md) | function | JSON Schema Advanced |
+| [`taplo`](./docs/03-json-schema-advanced.md) | function | JSON Schema Advanced |
+
+### Errors
+
+| Export | Kind | Guide |
+| ------ | ---- | ----- |
+| [`JsonSchemaError`](./docs/05-error-handling.md) | `TaggedError` | Error Handling |
+| [`JsonSchemaErrorBase`](./docs/05-error-handling.md) | `TaggedError` base | Error Handling |
+| [`JsonSchemaValidationError`](./docs/05-error-handling.md) | `TaggedError` | Error Handling |
+| [`JsonSchemaValidationErrorBase`](./docs/05-error-handling.md) | `TaggedError` base | Error Handling |
+
+### Types
+
+| Export | Kind | Guide |
+| ------ | ---- | ----- |
+| [`JsonSchemaExporterService`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
+| [`JsonSchemaValidatorService`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`ValidatorOptions`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`JsonSchemaOutput`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
+| [`SchemaEntry`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
+| [`JsonSchemaClassStatics`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`TombiOptions`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`TaploOptions`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`WriteResult`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
 
 ## License
 
