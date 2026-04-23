@@ -7,7 +7,7 @@ export default NodeLibraryBuilder.create({
 	},
 	transform({ pkg, target }) {
 		if (target?.registry === "https://npm.pkg.github.com/") {
-			pkg.name = "json-schema-effect";
+			pkg.name = "@spencerbeggs/json-schema-effect";
 		}
 		delete pkg.devDependencies;
 		delete pkg.bundleDependencies;
