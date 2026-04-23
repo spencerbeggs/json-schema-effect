@@ -11,19 +11,19 @@ json-schema-effect is an [Effect](https://effect.website/) library for generatin
 ## Installation
 
 ```bash
-pnpm add json-schema-effect effect @effect/platform
+npm install json-schema-effect effect @effect/platform
 ```
 
 For file system operations (writing schemas to disk):
 
 ```bash
-pnpm add @effect/platform-node
+npm install @effect/platform-node
 ```
 
 For schema validation with Ajv:
 
 ```bash
-pnpm add ajv
+npm install ajv
 ```
 
 ## Core Concepts

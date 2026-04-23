@@ -208,7 +208,7 @@ The scaffolder cannot process schemas with unresolved `$ref` entries. This happe
 
 ### ScaffoldError: serialization
 
-The TOML serializer (smol-toml) could not encode a value. This typically means a schema property resolves to a value type that TOML does not support (such as `null`). Check your schema defaults and ensure they produce TOML-compatible values.
+The TOML serializer could not encode a value. This typically means a schema property resolves to a value type that TOML does not support (such as `null`). Check your schema defaults and ensure they produce TOML-compatible values.
 
 ### Optional fields missing from output
 

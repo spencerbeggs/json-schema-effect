@@ -13,11 +13,13 @@ json-schema-effect turns [Effect Schema](https://effect.website/docs/schema/intr
 
 ## Features
 
-- **JsonSchemaExporter** -- Generate JSON Schema from Effect Schema definitions with full control over output entries
-- **JsonSchemaValidator** -- Validate generated schemas against Ajv strict mode for SchemaStore and Tombi compatibility
-- **JsonSchemaClass** -- Define self-describing schema classes that carry their own `$id`, output path, and TOML annotations
-- **Jsonifiable** -- Schema type that constrains values to JSON-safe structures for safe serialization
+- **JsonSchemaExporter** -- Generate JSON Schema from Effect Schema definitions with `$ref` inlining, artifact cleanup, and idempotent writes
+- **JsonSchemaValidator** -- Validate generated schemas with Ajv strict mode for SchemaStore and Tombi compatibility
+- **JsonSchemaScaffolder** -- Generate starter TOML/JSON config files from schema output with placeholder values, comments, and key ordering
+- **JsonSchemaClass** -- Define self-describing schema classes that carry their own `$id` and schema entry metadata
+- **Jsonifiable** -- Drop-in `Schema.Unknown` replacement that produces clean `{}` in JSON Schema output
 - **tombi / taplo** -- Annotation helpers that embed TOML tooling metadata directly into your Effect Schema definitions
+- **scaffoldJson / scaffoldToml** -- Pure scaffold helpers for generating config file strings without the Effect service layer
 
 ## Quick Example
 
@@ -25,64 +27,66 @@ json-schema-effect turns [Effect Schema](https://effect.website/docs/schema/intr
 import { NodeFileSystem } from "@effect/platform-node";
 import { Effect, Layer, Schema } from "effect";
 import {
-  JsonSchemaClass,
   JsonSchemaExporter,
   JsonSchemaValidator,
+  JsonSchemaScaffolder,
   tombi,
 } from "json-schema-effect";
 
-// 1. Define a self-describing schema class
-class MyConfig extends JsonSchemaClass("MyConfig", {
-  $id: "https://example.com/my-config.schema.json",
-  output: "schemas/my-config.schema.json",
-  annotations: tombi({ path: "my-config.toml" }),
-})({
+const AppConfig = Schema.Struct({
   name: Schema.String,
   port: Schema.Number,
-  debug: Schema.optional(Schema.Boolean, { default: () => false }),
-}) {}
-
-// 2. Build the service layer
-const ExporterLive = JsonSchemaExporter.Live({
-  schemas: [MyConfig],
-  rootDir: "./",
+  debug: Schema.optional(Schema.Boolean),
 });
 
-// 3. Generate, validate, and write
+const ExporterLayer = Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer);
+const ScaffolderLayer = Layer.provide(JsonSchemaScaffolder.Live, NodeFileSystem.layer);
+const FullLayer = Layer.mergeAll(ExporterLayer, JsonSchemaValidator.Live, ScaffolderLayer);
+
 const program = Effect.gen(function* () {
   const exporter = yield* JsonSchemaExporter;
-  const output = yield* exporter.export();
   const validator = yield* JsonSchemaValidator;
-  yield* validator.validateAll(output);
-  const results = yield* exporter.writeAll(output);
-  return results;
+  const scaffolder = yield* JsonSchemaScaffolder;
+
+  // Generate and validate JSON Schema
+  const output = yield* exporter.generate({
+    name: "AppConfig",
+    schema: AppConfig,
+    rootDefName: "AppConfig",
+    $id: "https://example.com/app-config.schema.json",
+    annotations: { ...tombi({ tomlVersion: "v1.0.0", tableKeysOrder: "schema" }) },
+  });
+  yield* validator.validate(output, { strict: true });
+
+  // Write JSON Schema to disk
+  yield* exporter.write(output, "schemas/app-config.schema.json");
+
+  // Scaffold a starter TOML config
+  yield* scaffolder.writeScaffold(output, "app-config.toml", {
+    format: "toml",
+    commentOptional: true,
+  });
 });
 
-Effect.runPromise(
-  program.pipe(
-    Effect.provide(ExporterLive),
-    Effect.provide(JsonSchemaValidator.Live()),
-    Effect.provide(NodeFileSystem.layer),
-  ),
-);
+Effect.runPromise(Effect.provide(program, FullLayer));
 ```
 
 ## Install
 
 ```bash
-pnpm add json-schema-effect effect @effect/platform
+npm install json-schema-effect effect @effect/platform
 ```
 
 For writing schemas to disk, also install the platform-specific layer:
 
 ```bash
-pnpm add @effect/platform-node
+npm install @effect/platform-node
 ```
 
 For `JsonSchemaValidator`, also install the optional peer dependency:
 
 ```bash
-pnpm add ajv
+npm install ajv
 ```
 
 ## Documentation
@@ -90,9 +94,10 @@ pnpm add ajv
 1. [Getting Started](./docs/01-getting-started.md)
 2. [JSON Schema Generation](./docs/02-json-schema-generation.md)
 3. [JSON Schema Advanced](./docs/03-json-schema-advanced.md)
-4. [Testing](./docs/04-testing.md)
-5. [Error Handling](./docs/05-error-handling.md)
-6. [API Reference](./docs/06-api-reference.md)
+4. [Config Scaffolding](./docs/04-config-scaffolding.md)
+5. [Testing](./docs/05-testing.md)
+6. [Error Handling](./docs/06-error-handling.md)
+7. [API Reference](./docs/07-api-reference.md)
 
 ## API at a Glance
 
@@ -102,6 +107,7 @@ pnpm add ajv
 | ------ | ---- | ----- |
 | [`JsonSchemaExporter`](./docs/02-json-schema-generation.md) | `Context.Tag` | JSON Schema Generation |
 | [`JsonSchemaValidator`](./docs/03-json-schema-advanced.md) | `Context.Tag` | JSON Schema Advanced |
+| [`JsonSchemaScaffolder`](./docs/04-config-scaffolding.md) | `Context.Tag` | Config Scaffolding |
 
 ### Schemas
 
@@ -118,15 +124,19 @@ pnpm add ajv
 | ------ | ---- | ----- |
 | [`tombi`](./docs/03-json-schema-advanced.md) | function | JSON Schema Advanced |
 | [`taplo`](./docs/03-json-schema-advanced.md) | function | JSON Schema Advanced |
+| [`scaffoldJson`](./docs/04-config-scaffolding.md) | function | Config Scaffolding |
+| [`scaffoldToml`](./docs/04-config-scaffolding.md) | function | Config Scaffolding |
 
 ### Errors
 
 | Export | Kind | Guide |
 | ------ | ---- | ----- |
-| [`JsonSchemaError`](./docs/05-error-handling.md) | `TaggedError` | Error Handling |
-| [`JsonSchemaErrorBase`](./docs/05-error-handling.md) | `TaggedError` base | Error Handling |
-| [`JsonSchemaValidationError`](./docs/05-error-handling.md) | `TaggedError` | Error Handling |
-| [`JsonSchemaValidationErrorBase`](./docs/05-error-handling.md) | `TaggedError` base | Error Handling |
+| [`JsonSchemaError`](./docs/06-error-handling.md) | `TaggedError` | Error Handling |
+| [`JsonSchemaErrorBase`](./docs/06-error-handling.md) | `TaggedError` base | Error Handling |
+| [`JsonSchemaValidationError`](./docs/06-error-handling.md) | `TaggedError` | Error Handling |
+| [`JsonSchemaValidationErrorBase`](./docs/06-error-handling.md) | `TaggedError` base | Error Handling |
+| [`ScaffoldError`](./docs/06-error-handling.md) | `TaggedError` | Error Handling |
+| [`ScaffoldErrorBase`](./docs/06-error-handling.md) | `TaggedError` base | Error Handling |
 
 ### Types
 
@@ -134,7 +144,10 @@ pnpm add ajv
 | ------ | ---- | ----- |
 | [`JsonSchemaExporterService`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
 | [`JsonSchemaValidatorService`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`JsonSchemaScaffolderService`](./docs/04-config-scaffolding.md) | type | Config Scaffolding |
 | [`ValidatorOptions`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |
+| [`ScaffoldOptions`](./docs/04-config-scaffolding.md) | type | Config Scaffolding |
+| [`ScaffoldHelperOptions`](./docs/04-config-scaffolding.md) | type | Config Scaffolding |
 | [`JsonSchemaOutput`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
 | [`SchemaEntry`](./docs/02-json-schema-generation.md) | type | JSON Schema Generation |
 | [`JsonSchemaClassStatics`](./docs/03-json-schema-advanced.md) | type | JSON Schema Advanced |

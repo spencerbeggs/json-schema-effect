@@ -32,7 +32,6 @@ exports:
 - `@effect/platform` (required peer) --- FileSystem abstraction for write operations
 - `@effect/platform-node` (optional peer) --- NodeFileSystem for Test layer
 - `ajv` (optional peer) --- JSON Schema validation engine
-- `smol-toml` (regular dependency) --- TOML serialization for scaffold helpers
 
 ## Architecture Decisions
 
@@ -144,7 +143,7 @@ schemas/JsonSchemaClass ──> services/JsonSchemaExporter (SchemaEntry type)
 
 helpers/taplo (standalone, no internal deps)
 helpers/tombi (standalone, no internal deps)
-helpers/scaffold (standalone, uses smol-toml)
+helpers/scaffold (standalone, no internal deps)
 schemas/Jsonifiable (standalone, uses effect SchemaAST)
 schemas/WriteResult (standalone)
 errors/* (standalone, uses effect Data)

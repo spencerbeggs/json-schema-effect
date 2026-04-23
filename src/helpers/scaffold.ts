@@ -1,4 +1,7 @@
-import { stringify as tomlStringify } from "smol-toml";
+/** @internal */
+export class UnsupportedTypeError extends Error {
+	readonly name = "UnsupportedTypeError";
+}
 
 /**
  * Options for the `scaffoldJson()` helper.
@@ -117,8 +120,11 @@ const formatTomlValue = (value: unknown): string => {
 		const items = value.map(formatTomlValue);
 		return `[${items.join(", ")}]`;
 	}
-	// For complex inline values, use smol-toml
-	return tomlStringify({ _: value }).replace("_ = ", "").trim();
+	if (typeof value === "object" && value !== null) {
+		if (Object.keys(value).length === 0) return "{}";
+		throw new UnsupportedTypeError("Cannot format non-empty object as inline TOML value");
+	}
+	return "null";
 };
 
 const emitTomlLines = (
@@ -176,8 +182,9 @@ const emitTomlLines = (
 		const formatted = formatTomlValue(value);
 
 		if (!isRequired && commentOptional) {
-			const defaultHint = propSchema.default !== undefined ? String(propSchema.default) : formatted;
-			lines.push(`# ${key} = ${formatted}  # optional, default: ${defaultHint}`);
+			const suffix =
+				propSchema.default !== undefined ? `  # optional, default: ${String(propSchema.default)}` : "  # optional";
+			lines.push(`# ${key} = ${formatted}${suffix}`);
 		} else {
 			lines.push(`${key} = ${formatted}`);
 		}

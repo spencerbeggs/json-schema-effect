@@ -24,8 +24,6 @@ The library follows the Effect service/layer pattern:
 ### Dependencies
 
 - `effect` and `@effect/platform` are required peer dependencies
-- `smol-toml` is a required dependency (used by `JsonSchemaScaffolder` for TOML
-  scaffold generation)
 - `ajv` is optional (only needed for `JsonSchemaValidator`)
 - `@effect/platform-node` is optional (only needed for `JsonSchemaExporter.Test`)
 

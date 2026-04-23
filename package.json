@@ -43,9 +43,6 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
-	"dependencies": {
-		"smol-toml": "^1.6.1"
-	},
 	"devDependencies": {
 		"@effect/platform": "^0.96.1",
 		"@effect/platform-node": "^0.106.0",

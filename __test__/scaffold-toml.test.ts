@@ -99,6 +99,21 @@ describe("scaffoldToml", () => {
 		expect(result).not.toContain("# timeout");
 	});
 
+	it("comments out optional fields without default using 'optional' hint only", () => {
+		const schema: Record<string, unknown> = {
+			type: "object",
+			properties: {
+				name: { type: "string" },
+				timeout: { type: "integer" },
+			},
+			required: ["name"],
+			additionalProperties: false,
+		};
+		const result = scaffoldToml(schema, { commentOptional: true });
+		expect(result).toContain("# timeout = 0  # optional");
+		expect(result).not.toContain("default:");
+	});
+
 	it("omits optional fields when includeOptional is false", () => {
 		const schema: Record<string, unknown> = {
 			type: "object",

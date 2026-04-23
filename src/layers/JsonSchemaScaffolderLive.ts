@@ -1,7 +1,7 @@
 import { FileSystem } from "@effect/platform";
 import { Effect, Layer } from "effect";
 import { ScaffoldError } from "../errors/ScaffoldError.js";
-import { scaffoldJson, scaffoldToml } from "../helpers/scaffold.js";
+import { UnsupportedTypeError, scaffoldJson, scaffoldToml } from "../helpers/scaffold.js";
 import { Unchanged, Written } from "../schemas/WriteResult.js";
 import type { JsonSchemaOutput } from "../services/JsonSchemaExporter.js";
 // biome-ignore lint/suspicious/noImportCycles: layer intentionally co-locates with its service tag
@@ -11,12 +11,16 @@ import { JsonSchemaScaffolder } from "../services/JsonSchemaScaffolder.js";
 
 type JsonSchema = Record<string, unknown>;
 
+class InternalScaffoldError {
+	constructor(
+		readonly reason: "unresolved-ref" | "unsupported-type" | "serialization",
+		readonly message: string,
+	) {}
+}
+
 const checkForUnresolvedRefs = (node: JsonSchema, path: string): void => {
 	if (node.$ref !== undefined) {
-		throw {
-			_reason: "unresolved-ref" as const,
-			message: `Unresolved $ref at "${path}": ${node.$ref}`,
-		};
+		throw new InternalScaffoldError("unresolved-ref", `Unresolved $ref at "${path}": ${node.$ref}`);
 	}
 	const properties = node.properties as Record<string, JsonSchema> | undefined;
 	if (properties) {
@@ -47,9 +51,11 @@ const generateScaffold = (output: JsonSchemaOutput, options: ScaffoldOptions): E
 			return scaffoldJson(schema, options);
 		},
 		catch: (error) => {
-			if (typeof error === "object" && error !== null && "_reason" in error) {
-				const e = error as { _reason: "unresolved-ref" | "unsupported-type" | "serialization"; message: string };
-				return new ScaffoldError({ reason: e._reason, message: e.message });
+			if (error instanceof InternalScaffoldError) {
+				return new ScaffoldError({ reason: error.reason, message: error.message });
+			}
+			if (error instanceof UnsupportedTypeError) {
+				return new ScaffoldError({ reason: "unsupported-type", message: error.message });
 			}
 			return new ScaffoldError({
 				reason: "serialization",

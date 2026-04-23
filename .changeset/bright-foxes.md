@@ -12,8 +12,6 @@ New `JsonSchemaScaffolder` service that generates starter config files from JSON
 * `writeScaffold(output, path, options)` writes the scaffold to disk with unchanged detection (returns `Written` or `Unchanged`)
 * Value resolution priority: `default` > `examples[0]` > `const` > `enum[0]` > type placeholder
 * TOML output supports `x-tombi-table-keys-order` for field ordering, `description` comments, `enum` hint comments, and `commentOptional` behavior
-* Uses `smol-toml` for TOML serialization
-
 ### Pure Scaffold Helpers
 
 Exported `scaffoldJson()` and `scaffoldToml()` pure functions for consumers who want scaffold output without going through the Effect service layer.
@@ -22,4 +20,4 @@ Exported `scaffoldJson()` and `scaffoldToml()` pure functions for consumers who 
 
 ### Platform Cleanup in Tests
 
-Replaced `node:fs` primitives (`mkdtempSync`, `rmSync`, `readFileSync`) with `@effect/platform` FileSystem operations in all test files for improved Bun/Deno compatibility.
+Replaced `node:fs` temp directory primitives (`mkdtempSync`, `rmSync`) with `@effect/platform` FileSystem operations in all test files for improved Bun/Deno compatibility.

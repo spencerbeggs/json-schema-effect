@@ -120,6 +120,32 @@ describe("JsonSchemaScaffolder", () => {
 		expect(error.reason).toBe("unresolved-ref");
 		expect(error.message).toContain("server.config");
 	});
+
+	it("scaffold returns ScaffoldError with unsupported-type for non-empty object values in TOML", async () => {
+		const output = {
+			name: "ObjectValueSchema",
+			schema: {
+				type: "object",
+				properties: {
+					metadata: { type: "object", const: { key: "value" } },
+				},
+				required: ["metadata"],
+			} as Record<string, unknown>,
+		};
+
+		const error = await Effect.runPromise(
+			Effect.provide(
+				Effect.gen(function* () {
+					const scaffolder = yield* JsonSchemaScaffolder;
+					return yield* scaffolder.scaffold(output, { format: "toml" }).pipe(Effect.flip);
+				}),
+				ScaffolderLayer,
+			),
+		);
+
+		expect(error._tag).toBe("ScaffoldError");
+		expect(error.reason).toBe("unsupported-type");
+	});
 });
 
 describe("JsonSchemaScaffolder.Test", () => {
