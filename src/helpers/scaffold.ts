@@ -87,13 +87,13 @@ const scaffoldObject = (schema: JsonSchema, options: ScaffoldHelperOptions, dept
  * Scaffolds a JSON config file string from a JSON Schema object.
  *
  * @remarks
- * Value resolution priority: default > examples[0] > const > enum[0] > anyOf/oneOf first branch > type placeholder.
+ * Value resolution priority: default, examples[0], const, enum[0], anyOf/oneOf first branch, type placeholder.
  * Type placeholders: `""` for string, `0` for number/integer, `false` for boolean, `[]` for array, `{}` for object.
  * Output uses tab indentation with a trailing newline, matching the exporter `write()` style.
  *
  * @public
  */
-export const scaffoldJson = (schema: JsonSchema, options: ScaffoldHelperOptions): string => {
+export const scaffoldJson = (schema: Record<string, unknown>, options: ScaffoldHelperOptions): string => {
 	const obj = scaffoldObject(schema, options, 0);
 	return `${JSON.stringify(obj, null, "\t")}\n`;
 };
@@ -216,11 +216,11 @@ const emitTomlLines = (
  * and `x-tombi-table-keys-order` for field ordering ("ascending", "descending",
  * "version-sort", "schema").
  * Optional fields are commented out when `commentOptional` is true (the default).
- * Value resolution priority: default > examples[0] > const > enum[0] > anyOf/oneOf first branch > type placeholder.
+ * Value resolution priority: default, examples[0], const, enum[0], anyOf/oneOf first branch, type placeholder.
  *
  * @public
  */
-export const scaffoldToml = (schema: JsonSchema, options: ScaffoldHelperOptions): string => {
+export const scaffoldToml = (schema: Record<string, unknown>, options: ScaffoldHelperOptions): string => {
 	const lines = emitTomlLines(schema, options, "", 0);
 	// Filter leading/trailing blank lines but keep a trailing newline
 	const trimmed = lines.join("\n").trim();
