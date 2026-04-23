@@ -138,7 +138,8 @@ Input to `JsonSchemaExporter.generate()`:
 
 | Field | Type | Default | Description |
 | ----- | ---- | ------- | ----------- |
-| `strict` | `boolean` | `false` | Enable Ajv strict mode + Tombi compatibility checks |
+| `strict` | `boolean` | `false` | Enable Tombi convention checks (additionalProperties on objects, annotation placement) |
+| `ajvStrict` | `boolean` | `false` | Enable Ajv's own strict mode (rejects unknown keywords, enforces strictRequired, etc) |
 
 ### WriteResult
 

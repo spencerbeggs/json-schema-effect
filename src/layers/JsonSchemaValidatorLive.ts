@@ -141,67 +141,72 @@ const checkSchemaConventions = (
 	return errors;
 };
 
-export const JsonSchemaValidatorLiveImpl = (): Layer.Layer<JsonSchemaValidator> =>
-	Layer.succeed(
+export const JsonSchemaValidatorLiveImpl = (): Layer.Layer<JsonSchemaValidator, JsonSchemaValidationError> =>
+	Layer.effect(
 		JsonSchemaValidator,
-		JsonSchemaValidator.of({
-			validate: (output: JsonSchemaOutput, options?: ValidatorOptions) =>
-				Effect.gen(function* () {
-					const errors: string[] = [];
-					const strict = options?.strict ?? false;
+		Effect.gen(function* () {
+			const AjvCtor = yield* loadAjv();
 
-					const AjvCtor = yield* loadAjv();
-					const ajv = new AjvCtor({ strict, strictTypes: false, allErrors: true });
-					for (const keyword of EXTENSION_KEYWORDS) {
-						ajv.addKeyword(keyword);
-					}
-					try {
-						ajv.compile(output.schema);
-					} catch (e) {
-						errors.push(String(e));
-					}
+			return JsonSchemaValidator.of({
+				validate: (output: JsonSchemaOutput, options?: ValidatorOptions) =>
+					Effect.gen(function* () {
+						const errors: string[] = [];
+						const strict = options?.strict ?? false;
+						const ajvStrict = options?.ajvStrict ?? false;
 
-					const conventionErrors = checkSchemaConventions(output.schema, "#", strict);
-					errors.push(...conventionErrors);
-
-					if (errors.length > 0) {
-						return yield* new JsonSchemaValidationError({
-							name: output.name,
-							errors,
-						});
-					}
-
-					return output;
-				}),
-
-			validateMany: (outputs: ReadonlyArray<JsonSchemaOutput>, options?: ValidatorOptions) =>
-				Effect.gen(function* () {
-					const allErrors: string[] = [];
-					const strict = options?.strict ?? false;
-					const AjvCtor = yield* loadAjv();
-					const ajv = new AjvCtor({ strict, strictTypes: false, allErrors: true });
-					for (const keyword of EXTENSION_KEYWORDS) {
-						ajv.addKeyword(keyword);
-					}
-
-					for (const output of outputs) {
+						const ajv = new AjvCtor({ strict: ajvStrict, strictTypes: false, allErrors: true });
+						for (const keyword of EXTENSION_KEYWORDS) {
+							ajv.addKeyword(keyword);
+						}
 						try {
 							ajv.compile(output.schema);
 						} catch (e) {
-							allErrors.push(`${output.name}: ${String(e)}`);
+							errors.push(String(e));
 						}
-						const conventionErrors = checkSchemaConventions(output.schema, `#(${output.name})`, strict);
-						allErrors.push(...conventionErrors);
-					}
 
-					if (allErrors.length > 0) {
-						return yield* new JsonSchemaValidationError({
-							name: outputs.map((o) => o.name).join(", "),
-							errors: allErrors,
-						});
-					}
+						const conventionErrors = checkSchemaConventions(output.schema, "#", strict);
+						errors.push(...conventionErrors);
 
-					return [...outputs];
-				}),
+						if (errors.length > 0) {
+							return yield* new JsonSchemaValidationError({
+								name: output.name,
+								errors,
+							});
+						}
+
+						return output;
+					}),
+
+				validateMany: (outputs: ReadonlyArray<JsonSchemaOutput>, options?: ValidatorOptions) =>
+					Effect.gen(function* () {
+						const allErrors: string[] = [];
+						const strict = options?.strict ?? false;
+						const ajvStrict = options?.ajvStrict ?? false;
+
+						const ajv = new AjvCtor({ strict: ajvStrict, strictTypes: false, allErrors: true });
+						for (const keyword of EXTENSION_KEYWORDS) {
+							ajv.addKeyword(keyword);
+						}
+
+						for (const output of outputs) {
+							try {
+								ajv.compile(output.schema);
+							} catch (e) {
+								allErrors.push(`${output.name}: ${String(e)}`);
+							}
+							const conventionErrors = checkSchemaConventions(output.schema, `#(${output.name})`, strict);
+							allErrors.push(...conventionErrors);
+						}
+
+						if (allErrors.length > 0) {
+							return yield* new JsonSchemaValidationError({
+								name: outputs.map((o) => o.name).join(", "),
+								errors: allErrors,
+							});
+						}
+
+						return [...outputs];
+					}),
+			});
 		}),
 	);

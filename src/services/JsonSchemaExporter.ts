@@ -40,5 +40,7 @@ export class JsonSchemaExporter extends Context.Tag("json-schema-effect/JsonSche
 	static get Live() {
 		return JsonSchemaExporterLiveImpl();
 	}
-	static Test = JsonSchemaExporterTestImpl;
+	static get Test() {
+		return JsonSchemaExporterTestImpl();
+	}
 }

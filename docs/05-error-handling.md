@@ -65,7 +65,7 @@ Fields:
 ### Catching Validation Errors
 
 ```typescript
-yield* validator.validate(output, { strict: true }).pipe(
+yield* validator.validate(output, { strict: true, ajvStrict: true }).pipe(
   Effect.catchTag("JsonSchemaValidationError", (err) => {
     console.error(`Validation failed for ${err.name}:`);
     for (const e of err.errors) console.error(`  - ${e}`);
@@ -84,7 +84,7 @@ const program = Effect.gen(function* () {
   const validator = yield* JsonSchemaValidator;
 
   const output = yield* exporter.generate(entry);
-  const validated = yield* validator.validate(output, { strict: true });
+  const validated = yield* validator.validate(output, { strict: true, ajvStrict: true });
   return yield* exporter.write(validated, outputPath);
 });
 

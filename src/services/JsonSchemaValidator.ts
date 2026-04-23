@@ -6,7 +6,10 @@ import { JsonSchemaValidatorLiveImpl } from "../layers/JsonSchemaValidatorLive.j
 import type { JsonSchemaOutput } from "./JsonSchemaExporter.js";
 
 export interface ValidatorOptions {
+	/** Enable Tombi convention checks (additionalProperties on objects, annotation placement). */
 	readonly strict?: boolean;
+	/** Enable Ajv's own strict mode (rejects unknown keywords, enforces strictRequired, etc). Default: false. */
+	readonly ajvStrict?: boolean;
 }
 
 export interface JsonSchemaValidatorService {
@@ -27,6 +30,7 @@ export class JsonSchemaValidator extends Context.Tag("json-schema-effect/JsonSch
 	static get Live() {
 		return JsonSchemaValidatorLiveImpl();
 	}
+	// Validator is pure CPU with no I/O state — Test returns the same implementation as Live
 	static get Test() {
 		return JsonSchemaValidatorLiveImpl();
 	}

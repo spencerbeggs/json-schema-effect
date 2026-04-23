@@ -56,17 +56,17 @@ describe("JsonSchemaValidator", () => {
 		expect(result.errors.length).toBeGreaterThan(0);
 	});
 
-	it("validates a correct schema in strict mode", async () => {
+	it("validates a correct schema with strict + ajvStrict", async () => {
 		const result = await run(
 			Effect.gen(function* () {
 				const validator = yield* JsonSchemaValidator;
-				return yield* validator.validate(validSchema, { strict: true });
+				return yield* validator.validate(validSchema, { strict: true, ajvStrict: true });
 			}),
 		);
 		expect(result.name).toBe("ValidSchema");
 	});
 
-	it("accepts x-taplo annotations in strict mode", async () => {
+	it("accepts x-taplo annotations in ajvStrict mode", async () => {
 		const schemaWithTaplo: JsonSchemaOutput = {
 			name: "TaploSchema",
 			schema: {
@@ -86,13 +86,13 @@ describe("JsonSchemaValidator", () => {
 		const result = await run(
 			Effect.gen(function* () {
 				const validator = yield* JsonSchemaValidator;
-				return yield* validator.validate(schemaWithTaplo, { strict: true });
+				return yield* validator.validate(schemaWithTaplo, { ajvStrict: true });
 			}),
 		);
 		expect(result.name).toBe("TaploSchema");
 	});
 
-	it("accepts combined x-tombi-* and x-taplo annotations in strict mode", async () => {
+	it("accepts combined x-tombi-* and x-taplo annotations with strict + ajvStrict", async () => {
 		const schemaWithBoth: JsonSchemaOutput = {
 			name: "CombinedSchema",
 			schema: {
@@ -114,7 +114,7 @@ describe("JsonSchemaValidator", () => {
 		const result = await run(
 			Effect.gen(function* () {
 				const validator = yield* JsonSchemaValidator;
-				return yield* validator.validate(schemaWithBoth, { strict: true });
+				return yield* validator.validate(schemaWithBoth, { strict: true, ajvStrict: true });
 			}),
 		);
 		expect(result.name).toBe("CombinedSchema");

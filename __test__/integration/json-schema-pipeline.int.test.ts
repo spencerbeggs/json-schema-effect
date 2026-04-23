@@ -348,12 +348,12 @@ describe("validation: non-strict mode", () => {
 // ── Validation: strict mode ─────────────────────────────────────────────────
 
 describe("validation: strict mode", () => {
-	it("accepts a valid clean schema in strict mode", async () => {
+	it("accepts a valid clean schema with strict + ajvStrict", async () => {
 		const schema = readFixture("valid-clean-schema.json");
 		const result = await runValidator(
 			Effect.gen(function* () {
 				const validator = yield* JsonSchemaValidator;
-				return yield* validator.validate(toOutput("valid-clean", schema), { strict: true });
+				return yield* validator.validate(toOutput("valid-clean", schema), { strict: true, ajvStrict: true });
 			}),
 		);
 		expect(result.name).toBe("valid-clean");
@@ -380,7 +380,9 @@ describe("validation: strict mode", () => {
 			Effect.provide(
 				Effect.gen(function* () {
 					const validator = yield* JsonSchemaValidator;
-					return yield* validator.validate(toOutput("invalid-type", schema), { strict: true }).pipe(Effect.flip);
+					return yield* validator
+						.validate(toOutput("invalid-type", schema), { strict: true, ajvStrict: true })
+						.pipe(Effect.flip);
 				}),
 				ValidatorLayer,
 			),
@@ -397,7 +399,9 @@ describe("validation: strict mode", () => {
 			Effect.provide(
 				Effect.gen(function* () {
 					const validator = yield* JsonSchemaValidator;
-					return yield* validator.validateMany([valid, missingAP, invalidType], { strict: true }).pipe(Effect.flip);
+					return yield* validator
+						.validateMany([valid, missingAP, invalidType], { strict: true, ajvStrict: true })
+						.pipe(Effect.flip);
 				}),
 				ValidatorLayer,
 			),
@@ -437,7 +441,7 @@ describe("E2E pipeline", () => {
 					rootDefName: "AppConfig",
 					$id: "https://json.schemastore.org/app-config.json",
 				});
-				const validated = yield* validator.validate(generated, { strict: true });
+				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
 				return yield* exporter.write(validated, outputPath);
 			}),
 		);
@@ -541,7 +545,7 @@ describe("E2E pipeline", () => {
 						...taplo({ initKeys: ["name", "version"], docs: { main: "Annotated config file" } }),
 					},
 				});
-				const validated = yield* validator.validate(generated, { strict: true });
+				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
 				return yield* exporter.write(validated, outputPath);
 			}),
 		);
@@ -594,7 +598,7 @@ describe("E2E pipeline", () => {
 						...taplo({ initKeys: ["name"] }),
 					},
 				});
-				const validated = yield* validator.validate(generated, { strict: true });
+				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
 				return yield* exporter.write(validated, outputPath);
 			}),
 		);

@@ -191,20 +191,18 @@ describe("JsonSchemaExporter", () => {
 });
 
 describe("JsonSchemaExporter.Test", () => {
-	it("generates schemas in scoped test layer", async () => {
+	it("generates schemas via test layer", async () => {
 		const result = await Effect.runPromise(
-			Effect.scoped(
-				Effect.provide(
-					Effect.gen(function* () {
-						const exporter = yield* JsonSchemaExporter;
-						return yield* exporter.generate({
-							name: "TestSchema",
-							schema: Schema.Struct({ name: Schema.String }),
-							rootDefName: "TestSchema",
-						});
-					}),
-					JsonSchemaExporter.Test,
-				),
+			Effect.provide(
+				Effect.gen(function* () {
+					const exporter = yield* JsonSchemaExporter;
+					return yield* exporter.generate({
+						name: "TestSchema",
+						schema: Schema.Struct({ name: Schema.String }),
+						rootDefName: "TestSchema",
+					});
+				}),
+				JsonSchemaExporter.Test,
 			),
 		);
 		expect(result.name).toBe("TestSchema");

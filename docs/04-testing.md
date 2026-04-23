@@ -13,30 +13,26 @@ Both services expose a static `.Test` accessor:
 
 ### JsonSchemaExporter.Test
 
-The Test layer creates a temporary directory and provides `NodeFileSystem` so write operations go to an isolated location. The temp directory is cleaned up when the scope closes.
+The Test layer provides `NodeFileSystem` so exporter operations work without manual layer composition.
 
 ```typescript
 import { Effect, Schema } from "effect";
 import { JsonSchemaExporter } from "json-schema-effect";
 
 const result = await Effect.runPromise(
-  Effect.scoped(
-    Effect.provide(
-      Effect.gen(function* () {
-        const exporter = yield* JsonSchemaExporter;
-        return yield* exporter.generate({
-          name: "TestSchema",
-          schema: Schema.Struct({ name: Schema.String }),
-          rootDefName: "TestSchema",
-        });
-      }),
-      JsonSchemaExporter.Test,
-    ),
+  Effect.provide(
+    Effect.gen(function* () {
+      const exporter = yield* JsonSchemaExporter;
+      return yield* exporter.generate({
+        name: "TestSchema",
+        schema: Schema.Struct({ name: Schema.String }),
+        rootDefName: "TestSchema",
+      });
+    }),
+    JsonSchemaExporter.Test,
   ),
 );
 ```
-
-Note the `Effect.scoped` wrapper --- `JsonSchemaExporter.Test` requires `Scope` because it manages a temp directory lifecycle.
 
 ### JsonSchemaValidator.Test
 

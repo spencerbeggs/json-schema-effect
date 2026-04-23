@@ -18,7 +18,7 @@ const program = Effect.gen(function* () {
   const validator = yield* JsonSchemaValidator;
 
   const output = yield* exporter.generate(entry);
-  const validated = yield* validator.validate(output, { strict: true });
+  const validated = yield* validator.validate(output, { strict: true, ajvStrict: true });
   yield* exporter.write(validated, "./schemas/my-config.json");
 });
 ```
@@ -33,29 +33,42 @@ const program = Effect.gen(function* () {
 
 `validate` returns the same `JsonSchemaOutput` on success, so it slots into the generate/write pipeline without unwrapping.
 
-### Validation Modes
+### Validation Options
+
+`ValidatorOptions` provides two independent controls:
+
+| Option | Controls | Default |
+| ------ | -------- | ------- |
+| `strict` | Tombi convention checks (additionalProperties, annotation placement) | `false` |
+| `ajvStrict` | Ajv's own strict mode (unknown keywords, overlapping unions) | `false` |
 
 **Non-strict (default):** Validates that the schema compiles as structurally valid draft-07. Use this during development.
 
 ```typescript
-yield* validator.validate(output); // strict: false by default
+yield* validator.validate(output); // both options default to false
 ```
 
-**Strict:** Enables Ajv strict mode plus TOML language server compatibility checks. Use this before submitting to SchemaStore or publishing schemas.
+**Tombi strict:** Enables TOML language server compatibility checks. Use this when generating schemas for Tombi/Taplo.
 
 ```typescript
 yield* validator.validate(output, { strict: true });
 ```
 
-Strict mode catches:
+`strict: true` catches objects with `properties` but no explicit `additionalProperties` declaration. Tombi treats such objects as closed by default --- strict validation flags this so you can decide whether to add `additionalProperties: true` or `additionalProperties: false` explicitly.
 
-- Unknown keywords and non-standard properties not prefixed with `x-` (Ajv strict)
-- Overlapping type unions (Ajv strict)
-- Objects with `properties` but no explicit `additionalProperties` declaration (Tombi compatibility)
+**Ajv strict:** Enables Ajv's own strict mode for maximum schema correctness.
 
-The Tombi check matters because Tombi treats objects without `additionalProperties` as closed by default. Strict validation flags this so you can decide whether to add `additionalProperties: true` or `additionalProperties: false` explicitly.
+```typescript
+yield* validator.validate(output, { ajvStrict: true });
+```
 
-Annotation placement checks (see below) run in both strict and non-strict modes. The strict flag only controls Ajv strict mode and the `additionalProperties` check.
+**Both:** For SchemaStore submissions, enable both for the strictest validation.
+
+```typescript
+yield* validator.validate(output, { strict: true, ajvStrict: true });
+```
+
+Annotation placement checks (see below) run regardless of either flag.
 
 ### Annotation Placement Rules
 
