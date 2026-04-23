@@ -16,7 +16,13 @@ export {
 	JsonSchemaValidationError,
 	JsonSchemaValidationErrorBase,
 } from "./errors/JsonSchemaValidationError.js";
+export {
+	ScaffoldError,
+	ScaffoldErrorBase,
+} from "./errors/ScaffoldError.js";
 // ── Helpers ────────────────────────────────────────────────────────────────
+export type { ScaffoldHelperOptions } from "./helpers/scaffold.js";
+export { scaffoldJson, scaffoldToml } from "./helpers/scaffold.js";
 export type { TaploOptions } from "./helpers/taplo.js";
 export { taplo } from "./helpers/taplo.js";
 export type { TombiOptions } from "./helpers/tombi.js";
@@ -34,6 +40,11 @@ export type {
 	SchemaEntry,
 } from "./services/JsonSchemaExporter.js";
 export { JsonSchemaExporter } from "./services/JsonSchemaExporter.js";
+export type {
+	JsonSchemaScaffolderService,
+	ScaffoldOptions,
+} from "./services/JsonSchemaScaffolder.js";
+export { JsonSchemaScaffolder } from "./services/JsonSchemaScaffolder.js";
 export type {
 	JsonSchemaValidatorService,
 	ValidatorOptions,

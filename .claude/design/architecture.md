@@ -2,7 +2,7 @@
 title: json-schema-effect Architecture
 module: json-schema-effect
 status: current
-completeness: 90
+completeness: 95
 last-synced: 2026-04-23
 ---
 
@@ -10,7 +10,7 @@ last-synced: 2026-04-23
 
 json-schema-effect is an Effect library for JSON Schema generation, validation,
 and TOML tooling annotations. It follows the standard Effect service/layer
-pattern with two services, three layers, and supporting schemas, helpers, and
+pattern with three services, five layers, and supporting schemas, helpers, and
 error types.
 
 ## System Boundaries
@@ -20,11 +20,11 @@ error types.
 All public exports go through `src/index.ts` (barrel export). The library
 exports:
 
-- 2 services (Context.Tag): JsonSchemaExporter, JsonSchemaValidator
-- 3 layers: ExporterLive, ExporterTest, ValidatorLive
+- 3 services (Context.Tag): JsonSchemaExporter, JsonSchemaValidator, JsonSchemaScaffolder
+- 5 layers: ExporterLive, ExporterTest, ValidatorLive, ScaffolderLive, ScaffolderTest
 - 3 schemas: JsonSchemaClass, Jsonifiable, WriteResult
-- 2 helpers: taplo(), tombi()
-- 2 error types: JsonSchemaError, JsonSchemaValidationError
+- 4 helpers: taplo(), tombi(), scaffoldJson(), scaffoldToml()
+- 3 error types: JsonSchemaError, JsonSchemaValidationError, ScaffoldError
 
 ### Dependencies
 
@@ -102,14 +102,24 @@ JsonSchemaValidator.validate() [optional]
     v
 JsonSchemaOutput (validated, same type)
     |
-    v
-JsonSchemaExporter.write()
-    |  1. read existing file (if any)
-    |  2. deep-compare with new schema
-    |  3. skip write if identical (Unchanged)
-    |  4. write to disk (Written)
-    v
-WriteResult ("Written" | "Unchanged")
+    ├──────────────────────────────────┐
+    v                                  v
+JsonSchemaExporter.write()     JsonSchemaScaffolder.scaffold()
+    |  1. read existing file           |  1. checkForUnresolvedRefs()
+    |  2. deep-compare                 |  2. scaffoldToml() or scaffoldJson()
+    |  3. skip if identical            |  3. return config file string
+    |  4. write to disk                v
+    v                            scaffold string
+WriteResult                          |
+                                     v
+                             JsonSchemaScaffolder.writeScaffold()
+                                 |  1. generate scaffold string
+                                 |  2. read existing file (if any)
+                                 |  3. deep-compare
+                                 |  4. skip if identical (Unchanged)
+                                 |  5. write to disk (Written)
+                                 v
+                             WriteResult ("Written" | "Unchanged")
 ```
 
 ## Module Dependency Graph
@@ -123,10 +133,17 @@ services/JsonSchemaExporter ──> layers/JsonSchemaExporterLive
 services/JsonSchemaValidator ──> layers/JsonSchemaValidatorLive
                               ──> errors/JsonSchemaValidationError
 
+services/JsonSchemaScaffolder ──> layers/JsonSchemaScaffolderLive
+                               ──> layers/JsonSchemaScaffolderTest
+                               ──> errors/ScaffoldError
+                               ──> schemas/WriteResult
+                               ──> helpers/scaffold
+
 schemas/JsonSchemaClass ──> services/JsonSchemaExporter (SchemaEntry type)
 
 helpers/taplo (standalone, no internal deps)
 helpers/tombi (standalone, no internal deps)
+helpers/scaffold (standalone, no internal deps)
 schemas/Jsonifiable (standalone, uses effect SchemaAST)
 schemas/WriteResult (standalone)
 errors/* (standalone, uses effect Data)

@@ -26,7 +26,7 @@ const program = Effect.gen(function* () {
 > **Requires ajv:** The `ajv` package is an optional peer dependency. Install it before using the validator:
 >
 > ```bash
-> pnpm add ajv
+> npm install ajv
 > ```
 >
 > If `ajv` is not installed, calling `validate` or `validateMany` will fail with a `JsonSchemaValidationError` explaining how to install it.
@@ -346,4 +346,4 @@ const Config = Schema.Struct({
 
 ---
 
-[Previous: JSON Schema Generation](./02-json-schema-generation.md) | [Next: Testing](./04-testing.md)
+[Previous: JSON Schema Generation](./02-json-schema-generation.md) | [Next: Config Scaffolding](./04-config-scaffolding.md)

@@ -1,13 +1,12 @@
-import { readFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { FileSystem } from "@effect/platform";
 import { NodeFileSystem } from "@effect/platform-node";
 import { Effect, Layer, Schema } from "effect";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { JsonSchemaExporter } from "../src/services/JsonSchemaExporter.js";
 
-const TestLayer = Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer);
+const TestLayer = Layer.mergeAll(Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer), NodeFileSystem.layer);
 
-const run = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter>) =>
+const run = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter | FileSystem.FileSystem>) =>
 	Effect.runPromise(Effect.provide(effect, TestLayer));
 
 const TestSchema = Schema.Struct({
@@ -15,13 +14,7 @@ const TestSchema = Schema.Struct({
 	port: Schema.Number,
 });
 
-const tmpDir = `/tmp/json-schema-effect-test-${Date.now()}`;
-
 describe("JsonSchemaExporter", () => {
-	afterEach(() => {
-		rmSync(tmpDir, { recursive: true, force: true });
-	});
-
 	it("generates a JSON Schema from an Effect Schema", async () => {
 		const result = await run(
 			Effect.gen(function* () {
@@ -55,27 +48,34 @@ describe("JsonSchemaExporter", () => {
 	});
 
 	it("writes schema file and returns Written", async () => {
-		const outputPath = join(tmpDir, "test.schema.json");
 		const result = await run(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-test-" });
+				const outputPath = `${tmpDir}/test.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const output = yield* exporter.generate({
 					name: "TestConfig",
 					schema: TestSchema,
 					rootDefName: "TestConfig",
 				});
-				return yield* exporter.write(output, outputPath);
+				const writeResult = yield* exporter.write(output, outputPath);
+				const content = yield* fs.readFileString(outputPath);
+				yield* fs.remove(tmpDir, { recursive: true });
+				return { writeResult, content };
 			}),
 		);
-		expect(result._tag).toBe("Written");
-		const content = JSON.parse(readFileSync(outputPath, "utf-8"));
-		expect(content.type).toBe("object");
+		expect(result.writeResult._tag).toBe("Written");
+		const parsed = JSON.parse(result.content);
+		expect(parsed.type).toBe("object");
 	});
 
 	it("returns Unchanged when file has not changed", async () => {
-		const outputPath = join(tmpDir, "test.schema.json");
 		const result = await run(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				const tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-test-" });
+				const outputPath = `${tmpDir}/test.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const output = yield* exporter.generate({
 					name: "TestConfig",
@@ -83,7 +83,9 @@ describe("JsonSchemaExporter", () => {
 					rootDefName: "TestConfig",
 				});
 				yield* exporter.write(output, outputPath);
-				return yield* exporter.write(output, outputPath);
+				const writeResult = yield* exporter.write(output, outputPath);
+				yield* fs.remove(tmpDir, { recursive: true });
+				return writeResult;
 			}),
 		);
 		expect(result._tag).toBe("Unchanged");
