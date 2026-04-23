@@ -3,32 +3,40 @@
 This file provides guidance to Claude Code when working with code in this
 repository.
 
-## Project Status
+## Project Overview
 
-This is a **base template repository** for developing and publishing Node.js
-modules to npm and GitHub Packages. It is not a working library — it contains
-placeholder source code in `src/` that should be replaced when starting a new
-project.
+`@spencerbeggs/json-schema-effect` is an Effect library for JSON Schema
+generation, validation, and TOML tooling annotations (Tombi/Taplo) built on
+Effect Schema. Extracted from `xdg-effect` as a standalone package.
 
-The design documentation system is available via Claude Code skills and agents
-but no design docs exist yet in this template.
+### Architecture
 
-## Getting Started (After Cloning This Template)
+The library follows the Effect service/layer pattern:
 
-When starting a new project from this template, follow this lifecycle:
+- **Services** define interfaces via `Context.Tag` (`JsonSchemaExporter`,
+  `JsonSchemaValidator`)
+- **Layers** provide implementations (`*Live`, `*Test`)
+- **Schemas** define data types (`JsonSchemaClass`, `Jsonifiable`, `WriteResult`)
+- **Helpers** provide pure annotation builders (`taplo()`, `tombi()`)
+- **Errors** use `Data.TaggedError` for typed error handling
 
-1. **Rename the package** — Update `name` in `package.json` (e.g.,
-   `@spencerbeggs/my-new-lib`), update `repository.url` and `homepage`, and
-   update the `repo` field in `.changeset/config.json`
-2. **Replace placeholder code** — Delete the example `Foo`/`Bar` code in
-   `src/index.ts` and `src/index.test.ts`
-3. **Initialize design documentation** — Run `/design-init` to create your
-   first design document describing the library's architecture
-4. **Follow the design-first workflow** — Design docs → `/plan-create` →
-   implementation. This ensures Claude understands the full architecture before
-   writing code
-5. **Implement iteratively** — Use the plan to guide implementation, updating
-   design docs as the architecture evolves
+### Dependencies
+
+- `effect` and `@effect/platform` are required peer dependencies
+- `ajv` is optional (only needed for `JsonSchemaValidator`)
+- `@effect/platform-node` is optional (only needed for `JsonSchemaExporter.Test`)
+
+### Source Layout
+
+```text
+src/
+  index.ts                          # Barrel export
+  errors/                           # TaggedError types
+  helpers/                          # Pure annotation builders (taplo, tombi)
+  layers/                           # Service implementations
+  schemas/                          # Data types and schema utilities
+  services/                         # Service interfaces (Context.Tag)
+```
 
 ## Build Pipeline
 
@@ -118,7 +126,7 @@ pnpm run build:inspect     # Inspect production build config (verbose)
 ### Running a Specific Test
 
 ```bash
-pnpm vitest run src/index.test.ts
+pnpm vitest run __test__/taplo.test.ts
 ```
 
 ## Code Quality and Hooks
