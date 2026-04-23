@@ -17,6 +17,10 @@ pnpmfileChecksum: sha256-c9H7NdFuy+EHPxtzs2AyECsNH3ZP4b8bcqm4aWTxXV0=
 importers:
 
   .:
+    dependencies:
+      smol-toml:
+        specifier: ^1.6.1
+        version: 1.6.1
     devDependencies:
       '@effect/platform':
         specifier: ^0.96.1

@@ -1,6 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { FileSystem } from "@effect/platform";
 import { NodeFileSystem } from "@effect/platform-node";
 import { Effect, Layer, ParseResult, Schema } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,15 +27,16 @@ const toOutput = (name: string, schema: Record<string, unknown>): JsonSchemaOutp
 
 const ExporterLayer = Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer);
 const ValidatorLayer = JsonSchemaValidator.Live;
-const FullLayer = Layer.mergeAll(ExporterLayer, ValidatorLayer);
+const FsLayer = NodeFileSystem.layer;
+const FullLayer = Layer.mergeAll(ExporterLayer, ValidatorLayer, FsLayer);
 
-const runExporter = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter>) =>
-	Effect.runPromise(Effect.provide(effect, ExporterLayer));
+const runExporter = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter | FileSystem.FileSystem>) =>
+	Effect.runPromise(Effect.provide(effect, Layer.mergeAll(ExporterLayer, FsLayer)));
 
 const runValidator = <A, E>(effect: Effect.Effect<A, E, JsonSchemaValidator>) =>
 	Effect.runPromise(Effect.provide(effect, ValidatorLayer));
 
-const runFull = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter | JsonSchemaValidator>) =>
+const runFull = <A, E>(effect: Effect.Effect<A, E, JsonSchemaExporter | JsonSchemaValidator | FileSystem.FileSystem>) =>
 	Effect.runPromise(Effect.provide(effect, FullLayer));
 
 // ── Schema generation snapshots ─────────────────────────────────────────────
@@ -416,22 +417,32 @@ describe("validation: strict mode", () => {
 describe("E2E pipeline", () => {
 	let tmpDir: string;
 
-	afterEach(() => {
-		if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
+	afterEach(async () => {
+		if (tmpDir) {
+			await Effect.runPromise(
+				Effect.provide(
+					Effect.gen(function* () {
+						const fs = yield* FileSystem.FileSystem;
+						yield* fs.remove(tmpDir, { recursive: true }).pipe(Effect.catchAll(() => Effect.void));
+					}),
+					FsLayer,
+				),
+			);
+		}
 	});
 
 	it("full pipeline: generate -> strict validate -> write -> read back", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "app-config.schema.json");
-
 		const AppConfig = Schema.Struct({
 			host: Schema.String,
 			port: Schema.Number,
 			debug: Schema.optional(Schema.Boolean),
 		});
 
-		const writeResult = await runFull(
+		const result = await runFull(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/app-config.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const validator = yield* JsonSchemaValidator;
 
@@ -442,24 +453,24 @@ describe("E2E pipeline", () => {
 					$id: "https://json.schemastore.org/app-config.json",
 				});
 				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
-				return yield* exporter.write(validated, outputPath);
+				const writeResult = yield* exporter.write(validated, outputPath);
+				const onDisk = JSON.parse(yield* fs.readFileString(outputPath)) as Record<string, unknown>;
+				return { writeResult, onDisk };
 			}),
 		);
 
-		expect(writeResult._tag).toBe("Written");
-
-		const onDisk = JSON.parse(readFileSync(outputPath, "utf-8")) as Record<string, unknown>;
-		expect(onDisk).toMatchSnapshot();
+		expect(result.writeResult._tag).toBe("Written");
+		expect(result.onDisk).toMatchSnapshot();
 	});
 
 	it("second write returns Unchanged", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "idempotent.schema.json");
-
 		const SimpleSchema = Schema.Struct({ name: Schema.String });
 
 		const result = await runExporter(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/idempotent.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const generated = yield* exporter.generate({
 					name: "Simple",
@@ -474,21 +485,21 @@ describe("E2E pipeline", () => {
 	});
 
 	it("writeMany writes multiple schemas to disk", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-
 		const A = Schema.Struct({ id: Schema.Number });
 		const B = Schema.Struct({ name: Schema.String });
 
 		const results = await runExporter(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
 				const exporter = yield* JsonSchemaExporter;
 				const outputs = yield* exporter.generateMany([
 					{ name: "A", schema: A, rootDefName: "A" },
 					{ name: "B", schema: B, rootDefName: "B" },
 				]);
 				return yield* exporter.writeMany([
-					{ output: outputs[0], path: join(tmpDir, "a.json") },
-					{ output: outputs[1], path: join(tmpDir, "b.json") },
+					{ output: outputs[0], path: `${tmpDir}/a.json` },
+					{ output: outputs[1], path: `${tmpDir}/b.json` },
 				]);
 			}),
 		);
@@ -497,9 +508,6 @@ describe("E2E pipeline", () => {
 	});
 
 	it("second write of Jsonifiable-containing schema returns Unchanged", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "with-jsonifiable.schema.json");
-
 		const Config = Schema.Struct({
 			name: Schema.String,
 			options: Jsonifiable,
@@ -507,6 +515,9 @@ describe("E2E pipeline", () => {
 
 		const result = await runExporter(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/with-jsonifiable.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const generated = yield* exporter.generate({
 					name: "Config",
@@ -521,17 +532,17 @@ describe("E2E pipeline", () => {
 	});
 
 	it("full pipeline with combined tombi + taplo annotations in strict mode", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "annotated-config.schema.json");
-
 		const AnnotatedConfig = Schema.Struct({
 			name: Schema.String,
 			version: Schema.String,
 			debug: Schema.optional(Schema.Boolean),
 		});
 
-		const writeResult = await runFull(
+		const result = await runFull(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/annotated-config.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const validator = yield* JsonSchemaValidator;
 
@@ -546,26 +557,23 @@ describe("E2E pipeline", () => {
 					},
 				});
 				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
-				return yield* exporter.write(validated, outputPath);
+				const writeResult = yield* exporter.write(validated, outputPath);
+				const onDisk = JSON.parse(yield* fs.readFileString(outputPath)) as Record<string, unknown>;
+				return { writeResult, onDisk };
 			}),
 		);
 
-		expect(writeResult._tag).toBe("Written");
-
-		const onDisk = JSON.parse(readFileSync(outputPath, "utf-8")) as Record<string, unknown>;
-		expect(onDisk["x-tombi-toml-version"]).toBe("v1.0.0");
-		expect(onDisk["x-tombi-table-keys-order"]).toBe("schema");
-		expect(onDisk["x-taplo"]).toEqual({
+		expect(result.writeResult._tag).toBe("Written");
+		expect(result.onDisk["x-tombi-toml-version"]).toBe("v1.0.0");
+		expect(result.onDisk["x-tombi-table-keys-order"]).toBe("schema");
+		expect(result.onDisk["x-taplo"]).toEqual({
 			initKeys: ["name", "version"],
 			docs: { main: "Annotated config file" },
 		});
-		expect(onDisk).toMatchSnapshot();
+		expect(result.onDisk).toMatchSnapshot();
 	});
 
 	it("full pipeline with annotations at multiple schema levels", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "multi-level-annotations.schema.json");
-
 		const MultiLevelConfig = Schema.Struct({
 			name: Schema.String,
 			plugins: Schema.Record({
@@ -583,8 +591,11 @@ describe("E2E pipeline", () => {
 			tags: Schema.Array(Schema.String),
 		});
 
-		const writeResult = await runFull(
+		const result = await runFull(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/multi-level-annotations.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const validator = yield* JsonSchemaValidator;
 
@@ -599,43 +610,43 @@ describe("E2E pipeline", () => {
 					},
 				});
 				const validated = yield* validator.validate(generated, { strict: true, ajvStrict: true });
-				return yield* exporter.write(validated, outputPath);
+				const writeResult = yield* exporter.write(validated, outputPath);
+				const onDisk = JSON.parse(yield* fs.readFileString(outputPath)) as Record<string, unknown>;
+				return { writeResult, onDisk };
 			}),
 		);
 
-		expect(writeResult._tag).toBe("Written");
-
-		const onDisk = JSON.parse(readFileSync(outputPath, "utf-8")) as Record<string, unknown>;
-		expect(onDisk["x-tombi-toml-version"]).toBe("v1.0.0");
-		expect(onDisk["x-tombi-table-keys-order"]).toBe("schema");
-		expect(onDisk["x-taplo"]).toEqual({ initKeys: ["name"] });
-		expect(onDisk).toMatchSnapshot();
+		expect(result.writeResult._tag).toBe("Written");
+		expect(result.onDisk["x-tombi-toml-version"]).toBe("v1.0.0");
+		expect(result.onDisk["x-tombi-table-keys-order"]).toBe("schema");
+		expect(result.onDisk["x-taplo"]).toEqual({ initKeys: ["name"] });
+		expect(result.onDisk).toMatchSnapshot();
 	});
 
 	it("Jsonifiable field produces clean empty object in written file", async () => {
-		tmpDir = mkdtempSync(join(tmpdir(), "json-schema-effect-int-test-"));
-		const outputPath = join(tmpDir, "jsonifiable.schema.json");
-
 		const Config = Schema.Struct({
 			name: Schema.String,
 			metadata: Jsonifiable,
 		});
 
-		await runExporter(
+		const result = await runExporter(
 			Effect.gen(function* () {
+				const fs = yield* FileSystem.FileSystem;
+				tmpDir = yield* fs.makeTempDirectory({ prefix: "json-schema-effect-int-test-" });
+				const outputPath = `${tmpDir}/jsonifiable.schema.json`;
 				const exporter = yield* JsonSchemaExporter;
 				const generated = yield* exporter.generate({
 					name: "JsonifiableConfig",
 					schema: Config,
 					rootDefName: "JsonifiableConfig",
 				});
-				return yield* exporter.write(generated, outputPath);
+				yield* exporter.write(generated, outputPath);
+				return JSON.parse(yield* fs.readFileString(outputPath)) as Record<string, unknown>;
 			}),
 		);
 
-		const onDisk = JSON.parse(readFileSync(outputPath, "utf-8")) as Record<string, unknown>;
-		expect(onDisk).toMatchSnapshot();
-		const props = onDisk.properties as Record<string, unknown>;
+		expect(result).toMatchSnapshot();
+		const props = result.properties as Record<string, unknown>;
 		expect(props.metadata).toEqual({});
 	});
 });

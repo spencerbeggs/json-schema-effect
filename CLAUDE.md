@@ -14,15 +14,18 @@ Effect Schema. Extracted from `xdg-effect` as a standalone package.
 The library follows the Effect service/layer pattern:
 
 - **Services** define interfaces via `Context.Tag` (`JsonSchemaExporter`,
-  `JsonSchemaValidator`)
+  `JsonSchemaValidator`, `JsonSchemaScaffolder`)
 - **Layers** provide implementations (`*Live`, `*Test`)
 - **Schemas** define data types (`JsonSchemaClass`, `Jsonifiable`, `WriteResult`)
-- **Helpers** provide pure annotation builders (`taplo()`, `tombi()`)
+- **Helpers** provide pure annotation builders (`taplo()`, `tombi()`) and
+  scaffold generators (`scaffoldJson()`, `scaffoldToml()`)
 - **Errors** use `Data.TaggedError` for typed error handling
 
 ### Dependencies
 
 - `effect` and `@effect/platform` are required peer dependencies
+- `smol-toml` is a required dependency (used by `JsonSchemaScaffolder` for TOML
+  scaffold generation)
 - `ajv` is optional (only needed for `JsonSchemaValidator`)
 - `@effect/platform-node` is optional (only needed for `JsonSchemaExporter.Test`)
 
@@ -32,7 +35,7 @@ The library follows the Effect service/layer pattern:
 src/
   index.ts                          # Barrel export
   errors/                           # TaggedError types
-  helpers/                          # Pure annotation builders (taplo, tombi)
+  helpers/                          # Pure helpers (taplo, tombi, scaffold)
   layers/                           # Service implementations
   schemas/                          # Data types and schema utilities
   services/                         # Service interfaces (Context.Tag)
