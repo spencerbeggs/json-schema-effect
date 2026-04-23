@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all exports from `@spencerbeggs/json-schema-effect`.
+Complete reference for all exports from `json-schema-effect`.
 
 ## Services
 

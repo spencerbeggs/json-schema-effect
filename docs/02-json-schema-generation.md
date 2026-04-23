@@ -49,7 +49,7 @@ interface SchemaEntry {
 `Jsonifiable` is a drop-in replacement for `Schema.Unknown` in definitions that will be serialized to JSON Schema.
 
 ```typescript
-import { Jsonifiable } from "@spencerbeggs/json-schema-effect";
+import { Jsonifiable } from "json-schema-effect";
 import { Schema } from "effect";
 
 const MyConfig = Schema.Struct({
@@ -118,7 +118,7 @@ Some tools (notably Tombi) do not support top-level `$ref`. `JsonSchemaExporter`
 ```typescript
 import { NodeFileSystem } from "@effect/platform-node";
 import { Effect, Schema } from "effect";
-import { JsonSchemaExporter } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaExporter } from "json-schema-effect";
 
 const MyToolConfig = Schema.Struct({
   name: Schema.String,
@@ -164,7 +164,7 @@ Create a `scripts/generate-schemas.ts` file:
 ```typescript
 import { NodeFileSystem } from "@effect/platform-node";
 import { Effect, Schema } from "effect";
-import { JsonSchemaExporter } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaExporter } from "json-schema-effect";
 
 const MyToolConfig = Schema.Struct({
   name: Schema.String,

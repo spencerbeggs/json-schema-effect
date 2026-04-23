@@ -5,7 +5,7 @@ repository.
 
 ## Project Overview
 
-`@spencerbeggs/json-schema-effect` is an Effect library for JSON Schema
+`json-schema-effect` is an Effect library for JSON Schema
 generation, validation, and TOML tooling annotations (Tombi/Taplo) built on
 Effect Schema. Extracted from `xdg-effect` as a standalone package.
 

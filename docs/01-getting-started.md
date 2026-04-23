@@ -11,7 +11,7 @@ json-schema-effect is an [Effect](https://effect.website/) library for generatin
 ## Installation
 
 ```bash
-pnpm add @spencerbeggs/json-schema-effect effect @effect/platform
+pnpm add json-schema-effect effect @effect/platform
 ```
 
 For file system operations (writing schemas to disk):
@@ -35,7 +35,7 @@ json-schema-effect follows the standard Effect service pattern. Each capability 
 ```typescript
 import { Effect, Layer } from "effect";
 import { NodeFileSystem } from "@effect/platform-node";
-import { JsonSchemaExporter } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaExporter } from "json-schema-effect";
 
 // Services are accessed via yield* inside Effect.gen
 const program = Effect.gen(function* () {
@@ -91,7 +91,7 @@ import { Effect, Layer, Schema } from "effect";
 import {
   JsonSchemaExporter,
   JsonSchemaValidator,
-} from "@spencerbeggs/json-schema-effect";
+} from "json-schema-effect";
 
 // Define your config schema
 const MyToolConfig = Schema.Struct({

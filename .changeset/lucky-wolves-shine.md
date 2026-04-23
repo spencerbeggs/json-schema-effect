@@ -1,10 +1,10 @@
 ---
-"@spencerbeggs/json-schema-effect": minor
+"json-schema-effect": minor
 ---
 
 ## Features
 
-Initial release of `@spencerbeggs/json-schema-effect`, an Effect library for JSON Schema generation, validation, and TOML tooling annotations extracted from `xdg-effect`.
+Initial release of `json-schema-effect`, an Effect library for JSON Schema generation, validation, and TOML tooling annotations extracted from `xdg-effect`.
 
 ### Services
 

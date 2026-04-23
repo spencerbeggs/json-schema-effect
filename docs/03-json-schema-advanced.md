@@ -11,7 +11,7 @@ import { Effect } from "effect";
 import {
   JsonSchemaExporter,
   JsonSchemaValidator,
-} from "@spencerbeggs/json-schema-effect";
+} from "json-schema-effect";
 
 const program = Effect.gen(function* () {
   const exporter = yield* JsonSchemaExporter;
@@ -94,7 +94,7 @@ import { Layer } from "effect";
 import {
   JsonSchemaExporter,
   JsonSchemaValidator,
-} from "@spencerbeggs/json-schema-effect";
+} from "json-schema-effect";
 
 const MainLayer = Layer.mergeAll(
   JsonSchemaExporter.Live,
@@ -110,7 +110,7 @@ const MainLayer = Layer.mergeAll(
 
 ```typescript
 import { Schema } from "effect";
-import { JsonSchemaClass } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaClass } from "json-schema-effect";
 
 class AppConfig extends JsonSchemaClass<AppConfig>("AppConfig", {
   $id: "https://json.schemastore.org/app-config.json",
@@ -174,7 +174,7 @@ Note: Extended classes inherit `$id` and `schemaEntry.name` from the base class.
 The `tombi()` function builds typed `x-tombi-*` annotation keys:
 
 ```typescript
-import { tombi } from "@spencerbeggs/json-schema-effect";
+import { tombi } from "json-schema-effect";
 
 const annotations = tombi({
   tomlVersion: "v1.0.0",
@@ -234,7 +234,7 @@ yield* exporter.generate({
 The `taplo()` function builds the `x-taplo` nested object:
 
 ```typescript
-import { taplo } from "@spencerbeggs/json-schema-effect";
+import { taplo } from "json-schema-effect";
 
 const annotations = taplo({
   initKeys: ["name", "version"],
@@ -324,7 +324,7 @@ Common causes: unknown keywords without `x-` prefix, overlapping type unions, or
 Replace `Schema.Unknown` with `Jsonifiable`:
 
 ```typescript
-import { Jsonifiable } from "@spencerbeggs/json-schema-effect";
+import { Jsonifiable } from "json-schema-effect";
 
 const Config = Schema.Struct({
   metadata: Jsonifiable, // not Schema.Unknown

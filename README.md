@@ -1,6 +1,6 @@
 # json-schema-effect
 
-[![npm version](https://img.shields.io/npm/v/@spencerbeggs/json-schema-effect)](https://www.npmjs.com/package/@spencerbeggs/json-schema-effect)
+[![npm version](https://img.shields.io/npm/v/json-schema-effect)](https://www.npmjs.com/package/json-schema-effect)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6)](https://www.typescriptlang.org/)
 [![Effect](https://img.shields.io/badge/Effect-3.21+-black)](https://effect.website/)
@@ -29,7 +29,7 @@ import {
   JsonSchemaExporter,
   JsonSchemaValidator,
   tombi,
-} from "@spencerbeggs/json-schema-effect";
+} from "json-schema-effect";
 
 // 1. Define a self-describing schema class
 class MyConfig extends JsonSchemaClass("MyConfig", {
@@ -70,7 +70,7 @@ Effect.runPromise(
 ## Install
 
 ```bash
-pnpm add @spencerbeggs/json-schema-effect effect @effect/platform
+pnpm add json-schema-effect effect @effect/platform
 ```
 
 For writing schemas to disk, also install the platform-specific layer:

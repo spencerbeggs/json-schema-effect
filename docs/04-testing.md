@@ -17,7 +17,7 @@ The Test layer creates a temporary directory and provides `NodeFileSystem` so wr
 
 ```typescript
 import { Effect, Schema } from "effect";
-import { JsonSchemaExporter } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaExporter } from "json-schema-effect";
 
 const result = await Effect.runPromise(
   Effect.scoped(
@@ -44,7 +44,7 @@ The Test layer is identical to Live because validation is a pure CPU operation w
 
 ```typescript
 import { Effect } from "effect";
-import { JsonSchemaValidator } from "@spencerbeggs/json-schema-effect";
+import { JsonSchemaValidator } from "json-schema-effect";
 
 const result = await Effect.runPromise(
   Effect.provide(
@@ -67,7 +67,7 @@ import { Effect, Layer } from "effect";
 import {
   JsonSchemaExporter,
   JsonSchemaValidator,
-} from "@spencerbeggs/json-schema-effect";
+} from "json-schema-effect";
 
 const ExporterLayer = Layer.provide(JsonSchemaExporter.Live, NodeFileSystem.layer);
 const ValidatorLayer = JsonSchemaValidator.Live;
