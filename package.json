@@ -1,6 +1,6 @@
 {
 	"name": "json-schema-effect",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"private": true,
 	"description": "Effect library for JSON Schema generation, validation, and TOML tooling annotations (Tombi/Taplo) built on Effect Schema.",
 	"keywords": ["effect", "json-schema", "validation", "tombi", "taplo", "toml", "schema", "typescript"],
