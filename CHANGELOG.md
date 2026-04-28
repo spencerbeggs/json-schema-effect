@@ -1,5 +1,11 @@
 # json-schema-effect
 
+## 0.2.1
+
+### Other
+
+* [`6b694a4`](https://github.com/spencerbeggs/json-schema-effect/commit/6b694a4d4a6f6342733bfa61942e17f675b07ee5) Lock effect deps to `@savvy-web/pnpm-plugin-silk`
+
 ## 0.2.0
 
 ### Features
