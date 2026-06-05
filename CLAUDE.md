@@ -135,7 +135,7 @@ pnpm vitest run __test__/taplo.test.ts
 ### Biome
 
 Unified linter and formatter replacing ESLint + Prettier. Configuration in
-`biome.jsonc` extends `@savvy-web/lint-staged/biome/silk.jsonc`.
+`biome.jsonc` extends `@savvy-web/silk/biome`.
 
 ### Commitlint
 
