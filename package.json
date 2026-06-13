@@ -43,26 +43,24 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
+	"dependencies": {
+		"ajv": "^8.20.0"
+	},
 	"devDependencies": {
 		"@effect/platform": "catalog:silk",
 		"@effect/platform-node": "catalog:silk",
 		"@savvy-web/bundler": "^0.4.0",
 		"@savvy-web/silk": "^0.4.2",
 		"@savvy-web/vitest": "^1.5.0",
-		"ajv": "^8.20.0",
 		"effect": "catalog:silk"
 	},
 	"peerDependencies": {
 		"@effect/platform": "catalog:silkPeers",
 		"@effect/platform-node": "catalog:silkPeers",
-		"ajv": "^8.20.0",
 		"effect": "catalog:silkPeers"
 	},
 	"peerDependenciesMeta": {
 		"@effect/platform-node": {
-			"optional": true
-		},
-		"ajv": {
 			"optional": true
 		}
 	},

@@ -24,8 +24,8 @@ The library follows the Effect service/layer pattern:
 ### Dependencies
 
 - `effect` and `@effect/platform` are required peer dependencies
-- `ajv` is optional (only needed for `JsonSchemaValidator`)
-- `@effect/platform-node` is optional (only needed for `JsonSchemaExporter.Test`)
+- `ajv` is a regular dependency (bundled; powers `JsonSchemaValidator`)
+- `@effect/platform-node` is an optional peer dependency (only needed for `JsonSchemaExporter.Test`)
 
 ### Source Layout
 

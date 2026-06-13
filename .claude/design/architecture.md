@@ -3,7 +3,7 @@ title: json-schema-effect Architecture
 module: json-schema-effect
 status: current
 completeness: 95
-last-synced: 2026-04-23
+last-synced: 2026-06-12
 ---
 
 ## Overview
@@ -31,7 +31,9 @@ exports:
 - `effect` (required peer) --- core runtime, Schema, JSONSchema, Context, Layer
 - `@effect/platform` (required peer) --- FileSystem abstraction for write operations
 - `@effect/platform-node` (optional peer) --- NodeFileSystem for Test layer
-- `ajv` (optional peer) --- JSON Schema validation engine
+- `ajv` (regular dependency) --- JSON Schema validation engine, fully encapsulated by `JsonSchemaValidator`
+
+`effect` and `@effect/platform` are peers because their instances cross the public API --- consumers compose them into their own runtime so the versions must match. `ajv` is the opposite case: it is lazily `import()`-ed inside `JsonSchemaValidatorLive` and its instances never escape the layer, so it is bundled as a regular dependency. A peer declaration there only produced spurious version-range warnings in consumer installs without buying any shared-instance safety. `@effect/platform-node` stays an optional peer because the consumer chooses the runtime FileSystem.
 
 ## Architecture Decisions
 

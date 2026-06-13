@@ -83,11 +83,7 @@ For writing schemas to disk, also install the platform-specific layer:
 npm install @effect/platform-node
 ```
 
-For `JsonSchemaValidator`, also install the optional peer dependency:
-
-```bash
-npm install ajv
-```
+`JsonSchemaValidator` works out of the box -- `ajv` ships as a bundled dependency, so there is nothing extra to install.
 
 ## Documentation
 

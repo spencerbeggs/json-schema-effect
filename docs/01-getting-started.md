@@ -20,11 +20,7 @@ For file system operations (writing schemas to disk):
 npm install @effect/platform-node
 ```
 
-For schema validation with Ajv:
-
-```bash
-npm install ajv
-```
+Schema validation works out of the box. `ajv` ships as a bundled dependency, so `JsonSchemaValidator` needs no extra install.
 
 ## Core Concepts
 
@@ -53,7 +49,7 @@ Effect.runPromise(Effect.provide(program, layer));
 | Service | Purpose | Dependencies |
 | ------- | ------- | ------------ |
 | `JsonSchemaExporter` | Generate JSON Schema from Effect Schema and write to disk | `FileSystem` (from `@effect/platform`) |
-| `JsonSchemaValidator` | Validate JSON Schema with Ajv and check annotation placement | `ajv` (optional peer) |
+| `JsonSchemaValidator` | Validate JSON Schema with Ajv and check annotation placement | `ajv` (bundled) |
 | `JsonSchemaScaffolder` | Generate starter config files (JSON/TOML) from JSON Schema | `FileSystem` (from `@effect/platform`) |
 
 ### The Pipeline
