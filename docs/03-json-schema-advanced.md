@@ -23,14 +23,6 @@ const program = Effect.gen(function* () {
 });
 ```
 
-> **Requires ajv:** The `ajv` package is an optional peer dependency. Install it before using the validator:
->
-> ```bash
-> npm install ajv
-> ```
->
-> If `ajv` is not installed, calling `validate` or `validateMany` will fail with a `JsonSchemaValidationError` explaining how to install it.
-
 `validate` returns the same `JsonSchemaOutput` on success, so it slots into the generate/write pipeline without unwrapping.
 
 ### Validation Options
@@ -115,7 +107,7 @@ const MainLayer = Layer.mergeAll(
 ).pipe(Layer.provide(NodeFileSystem.layer));
 ```
 
-`JsonSchemaValidator.Live` has no dependencies beyond `ajv`. The `ajv` package is an optional peer dependency --- install it only if you use the validator.
+`JsonSchemaValidator.Live` has no dependencies beyond `ajv`, which ships bundled with json-schema-effect --- no separate install is required.
 
 ## JsonSchemaClass Factory
 

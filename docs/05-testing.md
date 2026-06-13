@@ -8,7 +8,7 @@ All three services expose a static `.Test` accessor:
 
 | Service | Test behavior |
 | ------- | ------------- |
-| `JsonSchemaExporter.Test` | Creates a temporary directory, provides `NodeFileSystem`, and cleans up on scope close |
+| `JsonSchemaExporter.Test` | Provides `NodeFileSystem` so exporter operations work without manual layer composition |
 | `JsonSchemaValidator.Test` | Returns the Live implementation (Ajv is pure CPU, no I/O to mock) |
 | `JsonSchemaScaffolder.Test` | Provides `NodeFileSystem` so scaffold operations work without manual layer composition |
 

@@ -50,6 +50,10 @@ pnpmfileChecksum: sha256-yZa/dsXWVZWPF0lZNDwKgN5VIYpxgfuv3CVnwQPSzcI=
 importers:
 
   .:
+    dependencies:
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
     devDependencies:
       '@effect/platform':
         specifier: catalog:silk
@@ -66,9 +70,6 @@ importers:
       '@savvy-web/vitest':
         specifier: ^1.5.0
         version: 1.5.0(5f8fe0ae523e61154d10cde666a90f4a)
-      ajv:
-        specifier: ^8.20.0
-        version: 8.20.0
       effect:
         specifier: catalog:silk
         version: 3.21.3
