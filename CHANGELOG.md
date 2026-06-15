@@ -1,5 +1,11 @@
 # json-schema-effect
 
+## 0.2.4
+
+### Build System
+
+* [`586a06c`](https://github.com/spencerbeggs/json-schema-effect/commit/586a06cedbd0ef8006ef8b14fa74b5e7e3e748da) Switch to silk-release-action dev temporarily to test release workflow
+
 ## 0.2.3
 
 ### Bug Fixes
