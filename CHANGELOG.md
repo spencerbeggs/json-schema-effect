@@ -1,5 +1,11 @@
 # json-schema-effect
 
+## 0.2.3
+
+### Bug Fixes
+
+* [`8c4185c`](https://github.com/spencerbeggs/json-schema-effect/commit/8c4185cc7cfcf53e9945bdee632fcc3a47849c0d) Corrects leaked catalog bundleing in 0.2.2.
+
 ## 0.2.2
 
 ### Dependencies
