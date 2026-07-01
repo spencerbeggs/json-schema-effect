@@ -5,6 +5,11 @@ import type { JsonSchemaValidationError } from "../errors/JsonSchemaValidationEr
 import { JsonSchemaValidatorLiveImpl } from "../layers/JsonSchemaValidatorLive.js";
 import type { JsonSchemaOutput } from "./JsonSchemaExporter.js";
 
+/**
+ * Options controlling how strictly a {@link JsonSchemaOutput} is validated.
+ *
+ * @public
+ */
 export interface ValidatorOptions {
 	/** Enable Tombi convention checks (additionalProperties on objects, annotation placement). */
 	readonly strict?: boolean;
@@ -12,6 +17,11 @@ export interface ValidatorOptions {
 	readonly ajvStrict?: boolean;
 }
 
+/**
+ * Operations for validating generated JSON Schema documents.
+ *
+ * @public
+ */
 export interface JsonSchemaValidatorService {
 	readonly validate: (
 		output: JsonSchemaOutput,
@@ -23,6 +33,11 @@ export interface JsonSchemaValidatorService {
 	) => Effect.Effect<ReadonlyArray<JsonSchemaOutput>, JsonSchemaValidationError>;
 }
 
+/**
+ * Effect service tag for validating JSON Schema documents.
+ *
+ * @public
+ */
 export class JsonSchemaValidator extends Context.Tag("json-schema-effect/JsonSchemaValidator")<
 	JsonSchemaValidator,
 	JsonSchemaValidatorService

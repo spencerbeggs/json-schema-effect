@@ -4,6 +4,8 @@ import type { SchemaEntry } from "../services/JsonSchemaExporter.js";
 
 /**
  * Static members added by {@link JsonSchemaClass} to the returned class constructor.
+ *
+ * @public
  */
 export interface JsonSchemaClassStatics<Self> {
 	/** The JSON Schema `$id` URL for this schema class. */
@@ -17,7 +19,7 @@ export interface JsonSchemaClassStatics<Self> {
 }
 
 /**
- * A {@link Schema.Class} wrapper that bundles JSON Schema identity (`$id`,
+ * A `Schema.Class` wrapper that bundles JSON Schema identity (`$id`,
  * `$schema`) with the schema definition.
  *
  * Static members: `$id`, `schemaEntry` (for the exporter), `toJson` (encodes
@@ -44,6 +46,8 @@ export interface JsonSchemaClassStatics<Self> {
  * AppConfig.toJson(inst);  // Effect with { $schema, name, port }
  * AppConfig.validate(raw); // Effect<AppConfig, ParseError>
  * ```
+ *
+ * @public
  */
 export const JsonSchemaClass = <Self = never>(
 	name: string,

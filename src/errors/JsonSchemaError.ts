@@ -4,11 +4,12 @@ import { Data } from "effect";
  * Tagged error base for {@link JsonSchemaError}.
  *
  * @privateRemarks
- * Exported because TypeScript declaration bundling requires the base class to be
- * accessible when `JsonSchemaError` appears in public type signatures.
- * Consumers should use {@link JsonSchemaError} directly.
+ * Exported and tagged `@public` (rather than `@internal`) because it appears
+ * in the `extends` clause of the `@public` {@link JsonSchemaError}, so API
+ * Extractor requires it to be at least as visible. Consumers should use
+ * {@link JsonSchemaError} directly rather than construct this base.
  *
- * @internal
+ * @public
  */
 export const JsonSchemaErrorBase = Data.TaggedError("JsonSchemaError");
 

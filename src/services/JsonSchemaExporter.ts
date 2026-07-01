@@ -7,6 +7,12 @@ import { JsonSchemaExporterLiveImpl } from "../layers/JsonSchemaExporterLive.js"
 import { JsonSchemaExporterTestImpl } from "../layers/JsonSchemaExporterTest.js";
 import type { WriteResult } from "../schemas/WriteResult.js";
 
+/**
+ * A schema registration entry describing what to export and where its
+ * identity lives.
+ *
+ * @public
+ */
 export interface SchemaEntry {
 	readonly name: string;
 	// biome-ignore lint/suspicious/noExplicitAny: Schema type params are invariant — any is required to accept all schemas
@@ -17,11 +23,22 @@ export interface SchemaEntry {
 	readonly $id?: string;
 }
 
+/**
+ * The generated JSON Schema document for a single {@link SchemaEntry}.
+ *
+ * @public
+ */
 export interface JsonSchemaOutput {
 	readonly name: string;
 	readonly schema: Record<string, unknown>;
 }
 
+/**
+ * Operations for generating and writing JSON Schema documents from
+ * {@link SchemaEntry} registrations.
+ *
+ * @public
+ */
 export interface JsonSchemaExporterService {
 	readonly generate: (entry: SchemaEntry) => Effect.Effect<JsonSchemaOutput, JsonSchemaError>;
 	readonly generateMany: (
@@ -33,6 +50,11 @@ export interface JsonSchemaExporterService {
 	) => Effect.Effect<ReadonlyArray<WriteResult>, JsonSchemaError>;
 }
 
+/**
+ * Effect service tag for generating and writing JSON Schema documents.
+ *
+ * @public
+ */
 export class JsonSchemaExporter extends Context.Tag("json-schema-effect/JsonSchemaExporter")<
 	JsonSchemaExporter,
 	JsonSchemaExporterService

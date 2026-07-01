@@ -8,12 +8,24 @@ import { JsonSchemaScaffolderTestImpl } from "../layers/JsonSchemaScaffolderTest
 import type { WriteResult } from "../schemas/WriteResult.js";
 import type { JsonSchemaOutput } from "./JsonSchemaExporter.js";
 
+/**
+ * Options controlling how a scaffold document (TOML or JSON) is generated
+ * from a {@link JsonSchemaOutput}.
+ *
+ * @public
+ */
 export interface ScaffoldOptions {
 	readonly format: "toml" | "json";
 	readonly includeOptional?: boolean;
 	readonly commentOptional?: boolean;
 }
 
+/**
+ * Operations for generating and writing scaffold documents from JSON Schema
+ * output.
+ *
+ * @public
+ */
 export interface JsonSchemaScaffolderService {
 	readonly scaffold: (output: JsonSchemaOutput, options: ScaffoldOptions) => Effect.Effect<string, ScaffoldError>;
 	readonly writeScaffold: (
@@ -23,6 +35,11 @@ export interface JsonSchemaScaffolderService {
 	) => Effect.Effect<WriteResult, ScaffoldError>;
 }
 
+/**
+ * Effect service tag for generating and writing TOML/JSON scaffold documents.
+ *
+ * @public
+ */
 export class JsonSchemaScaffolder extends Context.Tag("json-schema-effect/JsonSchemaScaffolder")<
 	JsonSchemaScaffolder,
 	JsonSchemaScaffolderService
