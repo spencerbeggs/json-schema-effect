@@ -1,5 +1,15 @@
 # json-schema-effect
 
+## 0.3.0
+
+### Documentation
+
+* [`2303f9a`](https://github.com/spencerbeggs/json-schema-effect/commit/2303f9a385257c4efd8daf1a256135139985848a) Added `@public` release tags and TSDoc summaries across every exported service, schema, and error class, so the package now produces a clean API Extractor report (0 `ae-*` / `tsdoc-*` diagnostics, down from 23).
+
+- `@public` release tags on `JsonSchemaExporter`, `JsonSchemaValidator`, `JsonSchemaScaffolder`, `JsonSchemaClass`, `WriteResult`, and the tagged-error classes
+- Summary comments describing each exported member's purpose, so consumers get useful hover text and generated API docs
+- The synthetic `*Base` classes that `Data.TaggedError` generates (e.g. `JsonSchemaErrorBase`) are now tagged `@public` instead of `@internal`, since API Extractor requires a base class referenced in an `extends` clause to be at least as visible as the class extending it — consumers should still construct errors through `JsonSchemaError`, `JsonSchemaValidationError`, and `ScaffoldError` directly, not their bases
+
 ## 0.2.4
 
 ### Build System
