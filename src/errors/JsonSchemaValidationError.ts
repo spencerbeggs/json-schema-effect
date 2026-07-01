@@ -4,11 +4,13 @@ import { Data } from "effect";
  * Tagged error base for {@link JsonSchemaValidationError}.
  *
  * @privateRemarks
- * Exported because TypeScript declaration bundling requires the base class to be
- * accessible when `JsonSchemaValidationError` appears in public type signatures.
- * Consumers should use {@link JsonSchemaValidationError} directly.
+ * Exported and tagged `@public` (rather than `@internal`) because it appears
+ * in the `extends` clause of the `@public` {@link JsonSchemaValidationError},
+ * so API Extractor requires it to be at least as visible. Consumers should
+ * use {@link JsonSchemaValidationError} directly rather than construct this
+ * base.
  *
- * @internal
+ * @public
  */
 export const JsonSchemaValidationErrorBase = Data.TaggedError("JsonSchemaValidationError");
 
