@@ -1,5 +1,9 @@
 # json-schema-effect
 
+> [!CAUTION]
+> **This package is deprecated and no longer maintained.**
+> All functionality is now available natively in Effect v4.
+
 [![npm version](https://img.shields.io/npm/v/json-schema-effect)](https://www.npmjs.com/package/json-schema-effect)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6)](https://www.typescriptlang.org/)
